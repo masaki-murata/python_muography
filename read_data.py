@@ -11,7 +11,7 @@ import numpy as np
 # read muoncounter
 
 
-def row_to_numpy(row, width=29, height=29):
+def row_to_numpy(row, width=29, height=29, if_reshape=True):
     image = np.zeros((height*width))
     count=0
     for component in row:
@@ -27,7 +27,8 @@ def row_to_numpy(row, width=29, height=29):
             image[count] = int(component)
         count+=1
     assert count==height*width, "Dimension does not match!!"
-    image = image.reshape((height, width))
+    if if_reshape:
+        image = image.reshape((height, width))
     return image
 
 def csv_to_numpy(path_to_csv = "../data/1-6.2017.csv",
@@ -46,6 +47,7 @@ def csv_to_numpy(path_to_csv = "../data/1-6.2017.csv",
         np.save(path_to_numpy, images)
     return images
 
+"""
 def eruption_data(path_to_eruption_csv="../data/erupt.csv"):
     df_eruption = pd.read_csv(path_to_eruption_csv)
     eruption_times = df_eruption["eruption_date"].value
@@ -54,6 +56,26 @@ def eruption_data(path_to_eruption_csv="../data/erupt.csv"):
     for eruption_time in eruption_times:
         for observation_end_time in observation_end_times:
             if eruption_time > observation_end_times:
+"""
+
+def make_observation_csv(path_to_eruption_list_csv=""):
+    path_to_original_csv = "../data/1-6.2014.csv"
+    df_original = pd.read_csv(path_to_original_csv, header=None)
+    df_eruption = pd.read_csv(path_to_eruption_list_csv, header=None)
+    
+    columns = ["end of observation",] + ["pixel%03d" % i in range(1, 842)] + ["time to eruption",]
+    df = pd.DataFrame(columns = columns)
+    for i in range(len(df_original)):
+        time_str = df_original.iloc[i,0].split(".")[0]
+        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+        end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
+        
+        pixel_values = list(row_to_numpy(row=df_original[i,:].values, if_reshape=False))
+        
+        
+        df_original[0].values[0].split(".")[0]        
+        series = pd.Series([end_of_observation,]+pixel_values+[time_to_eruption,], index=df.columns)
+        df = df.append(series, ignore_index = True)
                 
                 
 #path_to_csv = "../data/1-6.2017.csv"
