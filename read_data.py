@@ -46,10 +46,19 @@ def csv_to_numpy(path_to_csv = "../data/1-6.2017.csv",
         np.save(path_to_numpy, images)
     return images
 
-
-path_to_csv = "../data/1-6.2017.csv"
-images = csv_to_numpy(path_to_csv=path_to_csv,
-                      if_save=True)
+def eruption_data(path_to_eruption_csv="../data/erupt.csv"):
+    df_eruption = pd.read_csv(path_to_eruption_csv)
+    eruption_times = df_eruption["eruption_date"].value
+    datetime.datetime.strptime('2017-01-18 04:50:00', '%Y/%m/%d %H:%M:%S')
+    
+    for eruption_time in eruption_times:
+        for observation_end_time in observation_end_times:
+            if eruption_time > observation_end_times:
+                
+                
+#path_to_csv = "../data/1-6.2017.csv"
+#images = csv_to_numpy(path_to_csv=path_to_csv,
+#                      if_save=True)
 
 """
 path_to_numpy = "../data/1-6.2017.npy"
