@@ -5,7 +5,7 @@ Created on Fri Oct 26 10:28:35 2018
 @author: murata
 """
 
-import csv, re
+import csv, re, datetime
 import pandas as pd
 import numpy as np
 # read muoncounter
@@ -61,10 +61,15 @@ def eruption_data(path_to_eruption_csv="../data/erupt.csv"):
 def make_observation_csv(path_to_eruption_list_csv=""):
     path_to_original_csv = "../data/1-6.2014.csv"
     df_original = pd.read_csv(path_to_original_csv, header=None)
-    df_eruption = pd.read_csv(path_to_eruption_list_csv, header=None)
+    df_eruption = pd.read_csv(path_to_eruption_list_csv)
+    time_of_eruptions = df_eruption["time of eruption"].values
+    for i in range(len(time_of_eruptions)):
+        time_of_eruptions[i] = datetime.datetime.strptime(time_of_eruptions[i], '%Y-%m-%d %H:%M:%S')
     
     columns = ["end of observation",] + ["pixel%03d" % i in range(1, 842)] + ["time to eruption",]
     df = pd.DataFrame(columns = columns)
+    count_eruption = 0
+    time_of_eruption = time_of_eruptions[0]
     for i in range(len(df_original)):
         time_str = df_original.iloc[i,0].split(".")[0]
         start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
@@ -72,8 +77,12 @@ def make_observation_csv(path_to_eruption_list_csv=""):
         
         pixel_values = list(row_to_numpy(row=df_original[i,:].values, if_reshape=False))
         
+        while end_of_observation > time_of_eruption:
+            count_eruption += 1
+            assert count_eruption < len(time_of_eruptions)+1
+            time_of_eruption = time_of_eruptions[count_eruption]
+        time_to_eruption = time_of_eruption - end_of_observation
         
-        df_original[0].values[0].split(".")[0]        
         series = pd.Series([end_of_observation,]+pixel_values+[time_to_eruption,], index=df.columns)
         df = df.append(series, ignore_index = True)
                 
