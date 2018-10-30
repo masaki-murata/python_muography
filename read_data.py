@@ -64,7 +64,7 @@ def make_observation_csv(path_to_eruption_list_csv=""):
     df_eruption = pd.read_csv(path_to_eruption_list_csv)
     time_of_eruptions = df_eruption["time of eruption"].values
     for i in range(len(time_of_eruptions)):
-        time_of_eruptions[i] = datetime.datetime.strptime(time_of_eruptions[i], '%Y-%m-%d %H:%M:%S')
+        time_of_eruptions[i] = datetime.datetime.strptime(time_of_eruptions[i], '%Y/%m/%d %H:%M')
     
     columns = ["end of observation",] + ["pixel%03d" % i in range(1, 842)] + ["time to eruption",]
     df = pd.DataFrame(columns = columns)
@@ -85,6 +85,8 @@ def make_observation_csv(path_to_eruption_list_csv=""):
         
         series = pd.Series([end_of_observation,]+pixel_values+[time_to_eruption,], index=df.columns)
         df = df.append(series, ignore_index = True)
+    
+    return df
                 
                 
 #path_to_csv = "../data/1-6.2017.csv"
