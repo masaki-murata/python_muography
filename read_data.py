@@ -12,6 +12,7 @@ import numpy as np
 
 
 def row_to_numpy(row, width=29, height=29, if_reshape=True):
+    row = list(map(str, row))
     image = np.zeros((height*width))
     count=0
     for component in row:
@@ -69,9 +70,8 @@ def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
     time_of_eruptions_str = df_eruption["time of eruption"].values
     time_of_eruptions = ["initial"]*len(time_of_eruptions_str)
     for i in range(len(time_of_eruptions)):
-        print(time_of_eruptions_str[i])
         time_of_eruptions[i] = datetime.datetime.strptime(time_of_eruptions_str[i], '%Y/%m/%d %H:%M')
-    
+
     columns = ["end of observation",] + ["pixel%03d" % i in range(1, 842)] + ["time to eruption",]
     df = pd.DataFrame(columns = columns)
     count_eruption = 0
@@ -81,7 +81,10 @@ def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
         start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
         end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
         
-        pixel_values = list(row_to_numpy(row=df_original[i,:].values, if_reshape=False))
+        pixel_values = list(row_to_numpy(row=df_original.iloc[i,:].values, if_reshape=False))
+        print("\r%s" % time_str)
+#        sys.stdout.write("\r%s" % time_str)
+#        sys.stdout.flush()
         
         while end_of_observation > time_of_eruption:
             count_eruption += 1
