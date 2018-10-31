@@ -197,20 +197,22 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
                         path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
                         time_step=6,
                         ):
-    df_observation = pd.read_csv(path_to_observation_csv, header=None)
+    df_observation = pd.read_csv(path_to_observation_csv)
     df_observation = df_observation.dropna(axis=0, how="all")    
-    time_str = df_image.iloc[0,0].split(".")[0]
+    time_strs = df_observation["end of observation"].values
+    print(time_strs)
     start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
     columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)] + ["time to eruption",]
     df = pd.DataFrame(columns = columns)
     for t in range(time_step, len(df_observation)):
-        time_str = df_image.iloc[t,0].split(".")[0]
-        time_delta = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')-start_of_observation
+#        time_str = df_image.iloc[t,0].split(".")[0]
+        time_delta = datetime.datetime.strptime(time_strs[t], '%Y-%m-%d %H:%M:%S')-end_of_observation
         if time_delta == datetime.timedelta(minutes=10*time_step):
-            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
-            df.append(series, ignore_index = True)
-        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
-    df.to_csv(path_to_observation_time_step_csv % time_step, index=None)
+            print("\r%d" % t, end="")
+#            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
+#            df.append(series, ignore_index = True)
+#        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+#    df.to_csv(path_to_observation_time_step_csv % time_step, index=None)
 
 
 def main():     
