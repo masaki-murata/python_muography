@@ -176,8 +176,10 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
     print(time_to_eruptions[-1])
     
     df_eruption = pd.DataFrame(time_to_eruptions,columns=["time to eruptions"])
-    
-    print(df_eruption.info())
+
+    df_observation = pd.concat([df_reform,df_eruption], axis=1)
+    df_observation.to_csv(path_to_observation_csv, index=None)
+    print(df_observation.info())
         
 #        print(len(pixel_values), len(columns))
         
