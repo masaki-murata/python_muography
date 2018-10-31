@@ -58,13 +58,29 @@ def eruption_data(path_to_eruption_csv="../data/erupt.csv"):
         for observation_end_time in observation_end_times:
             if eruption_time > observation_end_times:
 """
+# ミュオグラフィの観測時間が１０分刻みかどうか確認
+def check_timedelta(path_to_image_csv = "../data/1-6.2014.csv",
+                    ):
+    df_image = pd.read_csv(path_to_image_csv, header=None)
+    df_image = df_image.dropna(axis=0, how="all")    
+    time_str = df_image.iloc[0,0].split(".")[0]
+    start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+    for i in range(len(df_image)-1):
+        time_str = df_image.iloc[i,0].split(".")[0]
+        time_step = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')-start_of_observation
+        print("\r{0}".format(time_step), end="")
+        assert time_step==datetime.timedelta(minutes=10)
+        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+    
 
+# 観測終了時間、画素値、噴火までの時間
 def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
                          path_to_eruption_list_csv="../data/eruption_list_2014-2017.csv",
+                         path_to_observation_csv = "../data/observation.csv",
                          ):
     
-    df_original = pd.read_csv(path_to_image_csv, header=None)
-    df_original = df_original.dropna(axis=0, how="all")    
+    df_image = pd.read_csv(path_to_image_csv, header=None)
+    df_image = df_image.dropna(axis=0, how="all")    
     df_eruption = pd.read_csv(path_to_eruption_list_csv, encoding="cp932")
     df_eruption = df_eruption.dropna(axis=0, how="all")
     time_of_eruptions_str = df_eruption["time of eruption"].values
@@ -76,32 +92,39 @@ def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
     df = pd.DataFrame(columns = columns)
     count_eruption = 0
     time_of_eruption = time_of_eruptions[0]
-    for i in range(len(df_original)):
-        time_str = df_original.iloc[i,0].split(".")[0]
+    for i in range(len(df_image)):
+#    for i in range(5):
+        time_str = df_image.iloc[i,0].split(".")[0]
         start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
         end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
         
-        pixel_values = list(row_to_numpy(row=df_original.iloc[i,:].values, if_reshape=False))
-#        print("\r%s" % time_str)
-#        sys.stdout.write("\r%s" % time_str)
-#        sys.stdout.flush()
+        pixel_values = list(row_to_numpy(row=df_image.iloc[i,:].values, if_reshape=False))
         
         while end_of_observation > time_of_eruption:
             count_eruption += 1
 #            print("\r%d, %d" % (count_eruption, len(time_of_eruptions)) )
             assert count_eruption < len(time_of_eruptions)+1
             time_of_eruption = time_of_eruptions[count_eruption]
-        print("\r{0},{1}".format(end_of_observation, time_of_eruption))
+        print("\r{0},{1}".format(end_of_observation, time_of_eruption), end="")
         time_to_eruption = time_of_eruption - end_of_observation
         
 #        print(len(pixel_values), len(columns))
         series = pd.Series([end_of_observation,]+pixel_values+[time_to_eruption,], index=df.columns)
         df = df.append(series, ignore_index = True)
     
+    df.to_csv(path_to_observation_csv, index=None)
+    
     return df
-                
-df = make_observation_csv()       
-print(len(df))
+
+def main():     
+    check_timedelta()         
+#df = make_observation_csv()       
+#print(len(df))
+#print(df)
+
+if __name__ == '__main__':
+    main()
+
 #path_to_csv = "../data/1-6.2017.csv"
 #images = csv_to_numpy(path_to_csv=path_to_csv,
 #                      if_save=True)
