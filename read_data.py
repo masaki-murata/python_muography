@@ -10,7 +10,25 @@ import pandas as pd
 import numpy as np
 # read muoncounter
 
+def get_component(component):
+    component = str(component)
+    if re.search('(?<=\[\[)\d+', component):
+        comp = re.search('(?<=\[\[)\d+', component).group(0)
+    elif re.search('(?<=\[)\d+', component):
+        comp = re.search('(?<=\[)\d+', component).group(0)
+    elif re.search('(?<=\])\d+', component[::-1]):
+        comp = re.search('(?<=\])\d+', component[::-1]).group(0)
+    elif re.search('(?<=\]\])\d+', component[::-1]):
+        comp = re.search('(?<=\]\])\d+', component[::-1]).group(0)
+    else:
+        comp = int(component)
+    return comp
 
+def get_end_time(component):
+    start_time = datetime.datetime.strptime(component.split(".")[0], '%Y-%m-%d %H:%M:%S')
+    return start_time + datetime.timedelta(minutes=10)
+
+    
 def row_to_numpy(row, width=29, height=29, if_reshape=True):
     row = list(map(str, row))
     image = np.zeros((height*width))
@@ -80,6 +98,40 @@ def check_timedelta(path_to_image_csv = "../data/1-6.2014.csv",
     print("initial time =", df_image.iloc[0,0].split(".")[0])
     print("final time =", df_image.iloc[-1,0].split(".")[0])
 
+# ミュオグラフィのデータを扱いやすい形に整形
+def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
+                   path_to_reform_csv ="../data/1-6.2014_reform.csv",
+                   ):
+    df_image = pd.read_csv(path_to_image_csv, header=None)
+    df_image = df_image.dropna(axis=0, how="all")    
+    df_image = df_image[:5]
+    
+    df_pixels = df_image.applymap(get_component)
+    df_pixels.columns = ["pixel%03d" % xy for xy in range(1, 842)]
+    
+    df_times = df_image.loc[:,:0]
+    df_times = df_times.applymap(get_end_time)
+    df_times.columns = ["end of observation"]
+    
+#    print(df_pixels)
+#    print(df_times)
+    print(pd.concat([df_times,df_pixels], axis=1))
+
+#    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)]
+#    df_reform = pd.DataFrame(columns = columns)
+#    for i in range(len(df_image)):
+##    for i in range(5):
+#        time_str = df_image.iloc[i,0].split(".")[0]
+#        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+#        end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
+#
+#        pixel_values = list(row_to_numpy(row=df_image.iloc[i,:].values, if_reshape=False))
+#        series = pd.Series([end_of_observation,]+pixel_values, index=df_reform.columns)
+#        df_reform = df_reform.append(series, ignore_index = True)
+#        print("\r{0}".format(end_of_observation), end="")
+#    
+#    df_reform.to_csv(path_to_reform_csv, index=None)
+    
 # 観測終了時間、画素値、噴火までの時間
 def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
                          path_to_eruption_list_csv="../data/eruption_list_2014-2017.csv",
@@ -124,6 +176,7 @@ def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
     return df
 
 def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
+                        path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
                         time_step=6,
                         ):
     df_observation = pd.read_csv(path_to_observation_csv, header=None)
@@ -139,10 +192,11 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
             series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
             df.append(series, ignore_index = True)
         start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+    df.to_csv(path_to_observation_time_step_csv % time_step, index=None)
 
 
 def main():     
-    make_observation_csv()         
+    reform_muogram()         
 #df = make_observation_csv()       
 #print(len(df))
 #print(df)
@@ -154,46 +208,3 @@ if __name__ == '__main__':
 #images = csv_to_numpy(path_to_csv=path_to_csv,
 #                      if_save=True)
 
-"""
-path_to_numpy = "../data/1-6.2017.npy"
-images = np.load(path_to_numpy)
-print(images.shape)
-print(images[:1].sum())
-
-path_to_csv = "../data/1-6.2017.csv"
-muoncount_csv = open(path_to_csv, 'r')
-reader = csv.reader(muoncount_csv)
-#reader = csv.reader(muoncount_csv, lineterminator='\n')
-
-count=0
-#row0=[]
-for row in reader:
-    if count > 10:
-        break
-    else:
-#        row0.append(row[0][-1])
-#        print(row)
-#        image = row_to_numpy(row)
-        row_int = []
-        for component in row:
-            if re.search('(?<=\[\[)\d+', component):
-                row_int.append(re.search('(?<=\[\[)\d+', component).group(0))
-            elif re.search('(?<=\[)\d+', component):
-                row_int.append(re.search('(?<=\[)\d+', component).group(0))
-            elif re.search('(?<=\])\d+', component[::-1]):
-                row_int.append(re.search('(?<=\])\d+', component[::-1]).group(0))
-            elif re.search('(?<=\]\])\d+', component[::-1]):
-                row_int.append(re.search('(?<=\]\])\d+', component[::-1]).group(0))
-            else:
-                row_int.append(int(component))
-#        print(image.sum())
-        print(images[count].sum())
-        print(sum(map(int, row_int)))
-        count+=1
-#print(image)
-#print(image.sum())
-#print(sum(map(int, row0)))
-#print(len(row0), set(row0 ))
-#print(row0)
-#    count+=1
-"""
