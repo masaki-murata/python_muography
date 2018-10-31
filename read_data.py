@@ -26,7 +26,8 @@ def get_component(component):
 
 def get_end_time(component):
     start_time = datetime.datetime.strptime(component.split(".")[0], '%Y-%m-%d %H:%M:%S')
-    return start_time + datetime.timedelta(minutes=10)
+    end_time = start_time + datetime.timedelta(minutes=10)
+    return end_time
 
     
 def row_to_numpy(row, width=29, height=29, if_reshape=True):
@@ -110,7 +111,7 @@ def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
     
     df_times = df_image.loc[:,:0]
     df_times = df_times.applymap(get_end_time)
-    df_times.columns = ["start of observation"]
+    df_times.columns = ["end of observation"]
     
 #    print(pd.concat([df_times,df_pixels], axis=1))
     df_reform = pd.concat([df_times,df_pixels], axis=1)
@@ -141,7 +142,7 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
     
     df_reform = pd.read_csv(path_to_reform_csv)
     df_reform = df_reform.dropna(axis=0, how="all")
-    start_of_observations = list(df_reform["start of observation"].values)    
+    end_of_observations = list(df_reform["end of observation"].values)    
 #    df_image = pd.read_csv(path_to_image_csv, header=None)
 #    df_image = df_image.dropna(axis=0, how="all")    
     df_eruption = pd.read_csv(path_to_eruption_list_csv, encoding="cp932")
@@ -155,13 +156,14 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
     df = pd.DataFrame(columns = columns)
     count_eruption = 0
     time_of_eruption = time_of_eruptions[0]
-    time_to_eruptions = [0]*len(start_of_observations)
-    for i in range(len(start_of_observations)):
+    time_to_eruptions = [0]*len(end_of_observations)
+    for i in range(len(end_of_observations)):
 #    for i in range(5):
 #        time_str = df_reform.iloc[i,0].split(".")[0]
-        time_str = start_of_observations[i]
-        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
-        end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
+        time_str = end_of_observations[i]
+#        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+#        end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
+        end_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
         
 #        pixel_values = list(row_to_numpy(row=df_image.iloc[i,:].values, if_reshape=False))
         
@@ -171,6 +173,7 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
             assert count_eruption < len(time_of_eruptions)+1
             time_of_eruption = time_of_eruptions[count_eruption]
         print("\r{0},{1}".format(end_of_observation, time_of_eruption), end="")
+        end_of_observations[i] 
         time_to_eruptions[i] = time_of_eruption - end_of_observation
     print("")
     print(time_to_eruptions[-1])
