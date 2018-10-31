@@ -58,8 +58,10 @@ def eruption_data(path_to_eruption_csv="../data/erupt.csv"):
             if eruption_time > observation_end_times:
 """
 
-def make_observation_csv(path_to_eruption_list_csv=""):
-    path_to_original_csv = "../data/1-6.2014.csv"
+def make_observation_csv(path_to_original_csv = "../data/1-6.2014.csv",
+                         path_to_eruption_list_csv="",
+                         ):
+    
     df_original = pd.read_csv(path_to_original_csv, header=None)
     df_eruption = pd.read_csv(path_to_eruption_list_csv)
     time_of_eruptions = df_eruption["time of eruption"].values
