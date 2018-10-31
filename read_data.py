@@ -155,13 +155,15 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
     df = pd.DataFrame(columns = columns)
     count_eruption = 0
     time_of_eruption = time_of_eruptions[0]
+    time_to_eruptions = [0]*len(start_of_observations)
     for i in range(len(start_of_observations)):
 #    for i in range(5):
 #        time_str = df_reform.iloc[i,0].split(".")[0]
+        time_str = start_of_observations[i]
         start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
         end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
         
-        pixel_values = list(row_to_numpy(row=df_image.iloc[i,:].values, if_reshape=False))
+#        pixel_values = list(row_to_numpy(row=df_image.iloc[i,:].values, if_reshape=False))
         
         while end_of_observation > time_of_eruption:
             count_eruption += 1
@@ -169,13 +171,20 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
             assert count_eruption < len(time_of_eruptions)+1
             time_of_eruption = time_of_eruptions[count_eruption]
         print("\r{0},{1}".format(end_of_observation, time_of_eruption), end="")
-        time_to_eruption = time_of_eruption - end_of_observation
+        time_to_eruptions[i] = time_of_eruption - end_of_observation
+    print("")
+    print(time_to_eruptions[-1])
+    
+    df_eruption = pd.DataFrame(time_to_eruptions,columns=["time to eruptions"])
+    
+    print(df_eruption.info())
         
 #        print(len(pixel_values), len(columns))
-        series = pd.Series([end_of_observation,]+pixel_values+[time_to_eruption,], index=df.columns)
-        df = df.append(series, ignore_index = True)
+        
+#        series = pd.Series([end_of_observation,]+pixel_values+[time_to_eruption,], index=df.columns)
+#        df = df.append(series, ignore_index = True)
     
-    df.to_csv(path_to_observation_csv, index=None)
+#    df.to_csv(path_to_observation_csv, index=None)
     
     return df
 
@@ -200,7 +209,7 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
 
 
 def main():     
-    reform_muogram()         
+    make_observation_csv()         
 
 if __name__ == '__main__':
     main()
