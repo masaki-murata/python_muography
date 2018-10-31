@@ -110,7 +110,7 @@ def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
     
     df_times = df_image.loc[:,:0]
     df_times = df_times.applymap(get_end_time)
-    df_times.columns = ["end of observation"]
+    df_times.columns = ["start of observation"]
     
 #    print(pd.concat([df_times,df_pixels], axis=1))
     df_reform = pd.concat([df_times,df_pixels], axis=1)
@@ -133,13 +133,17 @@ def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
 #    df_reform.to_csv(path_to_reform_csv, index=None)
     
 # 観測終了時間、画素値、噴火までの時間
-def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
+def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
+                         path_to_reform_csv ="../data/1-6.2014_reform.csv",
                          path_to_eruption_list_csv="../data/eruption_list_2014-2017.csv",
                          path_to_observation_csv = "../data/observation.csv",
                          ):
     
-    df_image = pd.read_csv(path_to_image_csv, header=None)
-    df_image = df_image.dropna(axis=0, how="all")    
+    df_reform = pd.read_csv(path_to_reform_csv)
+    df_reform = df_reform.dropna(axis=0, how="all")
+    start_of_observations = list(df_reform["start of observation"].values)    
+#    df_image = pd.read_csv(path_to_image_csv, header=None)
+#    df_image = df_image.dropna(axis=0, how="all")    
     df_eruption = pd.read_csv(path_to_eruption_list_csv, encoding="cp932")
     df_eruption = df_eruption.dropna(axis=0, how="all")
     time_of_eruptions_str = df_eruption["time of eruption"].values
@@ -151,9 +155,9 @@ def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
     df = pd.DataFrame(columns = columns)
     count_eruption = 0
     time_of_eruption = time_of_eruptions[0]
-    for i in range(len(df_image)):
+    for i in range(len(start_of_observations)):
 #    for i in range(5):
-        time_str = df_image.iloc[i,0].split(".")[0]
+#        time_str = df_reform.iloc[i,0].split(".")[0]
         start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
         end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
         
@@ -197,9 +201,6 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
 
 def main():     
     reform_muogram()         
-#df = make_observation_csv()       
-#print(len(df))
-#print(df)
 
 if __name__ == '__main__':
     main()
