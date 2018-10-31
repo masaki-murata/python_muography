@@ -65,12 +65,17 @@ def check_timedelta(path_to_image_csv = "../data/1-6.2014.csv",
     df_image = df_image.dropna(axis=0, how="all")    
     time_str = df_image.iloc[0,0].split(".")[0]
     start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
-    for i in range(len(df_image)-1):
+    count_error = 0
+    for i in range(1,len(df_image)):
         time_str = df_image.iloc[i,0].split(".")[0]
         time_step = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')-start_of_observation
-        print("\r{0}".format(time_step), end="")
-        assert time_step==datetime.timedelta(minutes=10)
+        print(time_step)
+        if not time_step==datetime.timedelta(minutes=10):
+            count_error += 1
+#        print("\r{0}".format(time_step), end="")
+#        assert time_step==datetime.timedelta(minutes=10), "{0},{1}".format(df_image.iloc[i-1,0].split(".")[0],time_str)
         start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+    print(count_error)
     
 
 # 観測終了時間、画素値、噴火までの時間
