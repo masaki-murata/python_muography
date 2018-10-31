@@ -152,8 +152,8 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
     for i in range(len(time_of_eruptions)):
         time_of_eruptions[i] = datetime.datetime.strptime(time_of_eruptions_str[i], '%Y/%m/%d %H:%M')
 
-    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)] + ["time to eruption",]
-    df = pd.DataFrame(columns = columns)
+#    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)] + ["time to eruption",]
+#    df = pd.DataFrame(columns = columns)
     count_eruption = 0
     time_of_eruption = time_of_eruptions[0]
     time_to_eruptions = [0]*len(end_of_observations)
@@ -191,7 +191,7 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
     
 #    df.to_csv(path_to_observation_csv, index=None)
     
-    return df
+#    return df
 
 def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
                         path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
@@ -201,14 +201,15 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
     df_observation = df_observation.dropna(axis=0, how="all")    
     time_strs = df_observation["end of observation"].values
     print(time_strs)
-    start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
-    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)] + ["time to eruption",]
-    df = pd.DataFrame(columns = columns)
+    end_of_observation = datetime.datetime.strptime(time_strs[0], '%Y-%m-%d %H:%M:%S')
+#    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)] + ["time to eruption",]
+#    df = pd.DataFrame(columns = columns)
     for t in range(time_step, len(df_observation)):
 #        time_str = df_image.iloc[t,0].split(".")[0]
         time_delta = datetime.datetime.strptime(time_strs[t], '%Y-%m-%d %H:%M:%S')-end_of_observation
         if time_delta == datetime.timedelta(minutes=10*time_step):
             print("\r%d" % t, end="")
+            
 #            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
 #            df.append(series, ignore_index = True)
 #        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
@@ -216,7 +217,7 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
 
 
 def main():     
-    make_observation_csv()         
+    remove_time_deficit()         
 
 if __name__ == '__main__':
     main()
