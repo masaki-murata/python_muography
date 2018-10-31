@@ -82,14 +82,16 @@ def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
         end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
         
         pixel_values = list(row_to_numpy(row=df_original.iloc[i,:].values, if_reshape=False))
-        print("\r%s" % time_str)
+#        print("\r%s" % time_str)
 #        sys.stdout.write("\r%s" % time_str)
 #        sys.stdout.flush()
         
         while end_of_observation > time_of_eruption:
             count_eruption += 1
+#            print("\r%d, %d" % (count_eruption, len(time_of_eruptions)) )
             assert count_eruption < len(time_of_eruptions)+1
             time_of_eruption = time_of_eruptions[count_eruption]
+        print("\r{0},{1}".format(end_of_observation, time_of_eruption))
         time_to_eruption = time_of_eruption - end_of_observation
         
         series = pd.Series([end_of_observation,]+pixel_values+[time_to_eruption,], index=df.columns)
