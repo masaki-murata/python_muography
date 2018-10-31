@@ -72,7 +72,7 @@ def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
     for i in range(len(time_of_eruptions)):
         time_of_eruptions[i] = datetime.datetime.strptime(time_of_eruptions_str[i], '%Y/%m/%d %H:%M')
 
-    columns = ["end of observation",] + ["pixel%03d" % i in range(1, 842)] + ["time to eruption",]
+    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)] + ["time to eruption",]
     df = pd.DataFrame(columns = columns)
     count_eruption = 0
     time_of_eruption = time_of_eruptions[0]
@@ -94,6 +94,7 @@ def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
         print("\r{0},{1}".format(end_of_observation, time_of_eruption))
         time_to_eruption = time_of_eruption - end_of_observation
         
+#        print(len(pixel_values), len(columns))
         series = pd.Series([end_of_observation,]+pixel_values+[time_to_eruption,], index=df.columns)
         df = df.append(series, ignore_index = True)
     
