@@ -113,9 +113,9 @@ def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
     df_times = df_times.applymap(get_end_time)
     df_times.columns = ["end of observation"]
     
-#    print(df_pixels)
-#    print(df_times)
-    print(pd.concat([df_times,df_pixels], axis=1))
+#    print(pd.concat([df_times,df_pixels], axis=1))
+    df_reform = pd.concat([df_times,df_pixels], axis=1)
+    df_reform.to_csv(path_to_reform_csv, index=None)
 
 #    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)]
 #    df_reform = pd.DataFrame(columns = columns)
