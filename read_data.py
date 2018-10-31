@@ -69,14 +69,16 @@ def check_timedelta(path_to_image_csv = "../data/1-6.2014.csv",
     for i in range(1,len(df_image)):
         time_str = df_image.iloc[i,0].split(".")[0]
         time_step = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')-start_of_observation
-        print(time_step)
+#        print(time_step)
         if not time_step==datetime.timedelta(minutes=10):
             count_error += 1
+            print(time_str, time_step)
 #        print("\r{0}".format(time_step), end="")
 #        assert time_step==datetime.timedelta(minutes=10), "{0},{1}".format(df_image.iloc[i-1,0].split(".")[0],time_str)
         start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
     print(count_error)
-    
+    print("initial time =", df_image.iloc[0,0].split(".")[0])
+    print("final time =", df_image.iloc[-1,0].split(".")[0])
 
 # 観測終了時間、画素値、噴火までの時間
 def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
@@ -121,8 +123,26 @@ def make_observation_csv(path_to_image_csv = "../data/1-6.2014.csv",
     
     return df
 
+def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
+                        time_step=6,
+                        ):
+    df_observation = pd.read_csv(path_to_observation_csv, header=None)
+    df_observation = df_observation.dropna(axis=0, how="all")    
+    time_str = df_image.iloc[0,0].split(".")[0]
+    start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)] + ["time to eruption",]
+    df = pd.DataFrame(columns = columns)
+    for t in range(time_step, len(df_observation)):
+        time_str = df_image.iloc[t,0].split(".")[0]
+        time_delta = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')-start_of_observation
+        if time_delta == datetime.timedelta(minutes=10*time_step):
+            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
+            df.append(series, ignore_index = True)
+        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+
+
 def main():     
-    check_timedelta()         
+    make_observation_csv()         
 #df = make_observation_csv()       
 #print(len(df))
 #print(df)
