@@ -199,16 +199,20 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
                         ):
     df_observation = pd.read_csv(path_to_observation_csv)
     df_observation = df_observation.dropna(axis=0, how="all")    
-    time_strs = df_observation["end of observation"].values
-    print(time_strs)
-    end_of_observation = datetime.datetime.strptime(time_strs[0], '%Y-%m-%d %H:%M:%S')
+    end_of_observations = df_observation["end of observation"].values
+#    print(end_of_observations)
+    e_o_b_before = datetime.datetime.strptime(end_of_observations[0], '%Y-%m-%d %H:%M:%S')
 #    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)] + ["time to eruption",]
 #    df = pd.DataFrame(columns = columns)
+    e_o_b_time_step = []
     for t in range(time_step, len(df_observation)):
 #        time_str = df_image.iloc[t,0].split(".")[0]
-        time_delta = datetime.datetime.strptime(time_strs[t], '%Y-%m-%d %H:%M:%S')-end_of_observation
+        e_o_b_after = datetime.datetime.strptime(end_of_observations[t], '%Y-%m-%d %H:%M:%S')
+        time_delta = e_o_b_after-e_o_b_before
         if time_delta == datetime.timedelta(minutes=10*time_step):
+            e_o_b_time_step.append(e_o_b_after)
             print("\r%d" % t, end="")
+        e_o_b_before = e_o_b_after*1
             
 #            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
 #            df.append(series, ignore_index = True)
