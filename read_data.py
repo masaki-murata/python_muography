@@ -230,16 +230,22 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
 #    print(e_o_b_time_step[:3])
     print("")
     print(len(df_observation))
-    # 次はデータフレームから e_o_b_time_step に含まれるものだけ抽出しよう
+    
+    # 次はdf_observationから e_o_b_time_step に含まれるものだけ抽出しよう
     df_restricted = df_observation[df_observation["end of observation"].isin(e_o_b_time_step)]
     print(len(df_restricted))
     print(df_restricted[:3])
     df_restricted.to_csv(path_to_observation_time_step_csv % time_step)
 
 
+# time to eruption を再定義
+# ここは学習時でもいいかも
 def deform_times(path_to_observation_time_step_csv = "../data/observation_timestep144.csv",
+                 path_to_observation_ts_th =  "../data/observation_ts%03d.csv",
                  time_threshold=24, #単位は hour
                  ):
+    path_to_observation_ts_th = path_to_observation_time_step_csv[:-4] +\
+    "timethreshold%03d.csv" % time_threshold
     # 一定時間後を圧縮
     def deform_time(time):
         if time > time_threshold:
@@ -252,6 +258,13 @@ def deform_times(path_to_observation_time_step_csv = "../data/observation_timest
     print(len(deformed_times))
     print(deformed_times[:3])
     print(max(deformed_times))
+    
+    # time to eruption を置き換える
+    df_observation_t_s = df_observation_t_s.iloc[:,:-1]
+    df_eruption = pd.DataFrame(deformed_times,columns=["time to eruption"])
+    df_deformed_time = pd.concat([df_observation_t_s,df_eruption], axis=1)
+    df_deformed_time.to_csv(path_to_observation_ts_th, index=None)
+    
 #            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
 #            df.append(series, ignore_index = True)
 #        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
