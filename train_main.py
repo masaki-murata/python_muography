@@ -21,6 +21,8 @@ def make_model(input_shape,
     output = Dense(1, activation="relu")(x)
     
     model = Model(input_img, output)
+    opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    model.compile(loss='mean_squared_error', optimizer=opt_generator)
     
     model.summary()
     
