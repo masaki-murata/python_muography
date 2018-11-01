@@ -243,7 +243,8 @@ def deform_times(path_to_observation_time_step_csv = "../data/observation_timest
     # 一定時間後を圧縮
     def deform_time(time):
         if time > time_threshold:
-            time = time + time_threshold*math.tanh(time)
+            arg_tanh = (time-time_threshold) / time_threshold
+            time = time_threshold + time_threshold*math.tanh(arg_tanh)
         return time
     df_observation_t_s = pd.read_csv(path_to_observation_time_step_csv)
     time_to_eruptions = df_observation_t_s["time to eruption"].values
