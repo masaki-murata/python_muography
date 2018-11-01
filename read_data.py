@@ -5,7 +5,7 @@ Created on Fri Oct 26 10:28:35 2018
 @author: murata
 """
 
-import csv, re, datetime
+import csv, re, datetime, math
 import pandas as pd
 import numpy as np
 # read muoncounter
@@ -133,13 +133,20 @@ def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
 #    
 #    df_reform.to_csv(path_to_reform_csv, index=None)
     
-# 観測終了時間、画素値、噴火までの時間
+# 観測終了時間、画素値、噴火までの時間を csv 形式で保存
 def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
                          path_to_reform_csv ="../data/1-6.2014_reform.csv",
                          path_to_eruption_list_csv="../data/eruption_list_2014-2017.csv",
                          path_to_observation_csv = "../data/observation.csv",
+                         time_unit="hour",
                          ):
-    
+    # 単位時間 を秒単位で表す
+    if time_unit == "minute":
+        t_u = 60.0     
+    elif time_unit == "hour":
+        t_u = 3600.0 
+    elif time_unit == "day":
+        t_u = 3600.0 * 24.0
     df_reform = pd.read_csv(path_to_reform_csv)
     df_reform = df_reform.dropna(axis=0, how="all")
     end_of_observations = list(df_reform["end of observation"].values)    
@@ -174,7 +181,9 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
             time_of_eruption = time_of_eruptions[count_eruption]
         print("\r{0},{1}".format(end_of_observation, time_of_eruption), end="")
         end_of_observations[i] 
-        time_to_eruptions[i] = time_of_eruption - end_of_observation
+        time_to_eruption = time_of_eruption - end_of_observation
+        time_to_eruptions[i] = time_to_eruption.total_seconds() / t_u
+        
     print("")
     print(time_to_eruptions[-1])
     
@@ -197,7 +206,7 @@ def datetime_to_str(time):
     
 def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
                         path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
-                        time_step=6, # time_ste*10 分間の観測データを使う
+                        time_step=6, # time_step*10 分間の観測データを使う
                         ):
     ts_minus = time_step-1
     df_observation = pd.read_csv(path_to_observation_csv)
@@ -220,11 +229,25 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
     e_o_b_time_step = list(map(datetime_to_str, e_o_b_time_step))
 #    print(e_o_b_time_step[:3])
     print("")
-    print(len(e_o_b_time_step))
+    print(len(df_observation))
     # 次はデータフレームから e_o_b_time_step に含まれるものだけ抽出しよう
     df_restricted = df_observation[df_observation["end of observation"].isin(e_o_b_time_step)]
     print(len(df_restricted))
-    
+    print(df_restricted[:3])
+    df_restricted.to_csv(path_to_observation_time_step_csv % time_step)
+
+
+def deform_times(path_to_observation_time_step_csv = "../data/observation_timestep144.csv",
+                 time_threshold=24*6,
+                 ):
+    # 一定時間後を圧縮
+    def deform_time(time):
+        if time > time_threshold:
+            time = time + 24*6*math.tanh(time)
+        return time
+    df_observation_t_s = pd.read_csv(path_to_observation_time_step_csv)
+    time_to_eruptions = df_observation_t_s["time to eruption"].values
+    list(map(deform_time, time_to_eruptions))
 #            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
 #            df.append(series, ignore_index = True)
 #        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
@@ -232,6 +255,7 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
 
 
 def main():     
+#    make_observation_csv()
     remove_time_deficit(time_step=24*6)         
 
 if __name__ == '__main__':
