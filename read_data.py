@@ -192,7 +192,9 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
 #    df.to_csv(path_to_observation_csv, index=None)
     
 #    return df
-
+def datetime_to_str(time):
+    return time.strftime('%Y-%m-%d %H:%M:%S')
+    
 def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
                         path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
                         time_step=6, # time_ste*10 分間の観測データを使う
@@ -215,9 +217,13 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
             e_o_b_time_step.append(e_o_b_after)
             print("\r%d" % t, end="")
         e_o_b_before = e_o_b_after+datetime.timedelta(minutes=0)
-    print(e_o_b_time_step)
+    e_o_b_time_step = list(map(datetime_to_str, e_o_b_time_step))
+#    print(e_o_b_time_step[:3])
+    print("")
     print(len(e_o_b_time_step))
     # 次はデータフレームから e_o_b_time_step に含まれるものだけ抽出しよう
+    df_restricted = df_observation[df_observation["end of observation"].isin(e_o_b_time_step)]
+    print(len(df_restricted))
     
 #            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
 #            df.append(series, ignore_index = True)
