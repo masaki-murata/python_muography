@@ -187,7 +187,7 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
     print("")
     print(time_to_eruptions[-1])
     
-    df_eruption = pd.DataFrame(time_to_eruptions,columns=["time to eruptions"])
+    df_eruption = pd.DataFrame(time_to_eruptions,columns=["time to eruption"])
 
     df_observation = pd.concat([df_reform,df_eruption], axis=1)
     df_observation.to_csv(path_to_observation_csv, index=None)
@@ -238,16 +238,19 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
 
 
 def deform_times(path_to_observation_time_step_csv = "../data/observation_timestep144.csv",
-                 time_threshold=24*6,
+                 time_threshold=24, #単位は hour
                  ):
     # 一定時間後を圧縮
     def deform_time(time):
         if time > time_threshold:
-            time = time + 24*6*math.tanh(time)
+            time = time + time_threshold*math.tanh(time)
         return time
     df_observation_t_s = pd.read_csv(path_to_observation_time_step_csv)
     time_to_eruptions = df_observation_t_s["time to eruption"].values
-    list(map(deform_time, time_to_eruptions))
+    deformed_times = list(map(deform_time, time_to_eruptions))
+    print(len(deformed_times))
+    print(deformed_times[:3])
+    print(max(deformed_times))
 #            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
 #            df.append(series, ignore_index = True)
 #        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
@@ -256,7 +259,8 @@ def deform_times(path_to_observation_time_step_csv = "../data/observation_timest
 
 def main():     
 #    make_observation_csv()
-    remove_time_deficit(time_step=24*6)         
+#    remove_time_deficit(time_step=24*6)         
+    deform_times()
 
 if __name__ == '__main__':
     main()
