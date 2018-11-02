@@ -7,7 +7,7 @@ Created on Thu Nov  1 15:24:58 2018
 """
 
 import pandas as pd
-import random
+import random, datetime
 from keras.layers import Input, Dense, Conv3D, Flatten
 from keras.models import Model
 from keras.optimizers import Adam
@@ -31,19 +31,21 @@ def make_model(input_shape,
     
     model.summary()
 
-def make_data(path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
-              time_step=6, # time_step*10 分間の観測データを使う
-              ratio = [0.6, 0.2, 0.2],
-              ):
+def devide_data(path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
+                time_step=6, # time_step*10 分間の観測データを使う
+                ratio = [0.6, 0.2, 0.2],
+                ):
     df_observation = pd.read_csv(path_to_observation_time_step_csv % time_step)
-    train_num = len(df_observation)*ratio[0]
-    validation_num = len(df_observation)*ratio[0]
-    test_num = len(df_observation) - train_num - validation_num
+    train_num = int(len(df_observation)*ratio[0])
+    validation_num = int(len(df_observation)*ratio[1])
+#    test_num = len(df_observation) - train_num - validation_num
     
     # データフレームを３つに分割
     df_train = df_observation[:train_num]
-    df_validation = df_observatidf_observationon[train_num:train_num+validation_num]
+    df_validation = df_observation[train_num:train_num+validation_num]
     df_test = df_observation[train_num+validation_num:]
+    
+    return df_train, df_validation, df_test
 
 def make_validation_test(df,
                          time_step=6, # time_step*10 分間の観測データを使う
@@ -56,18 +58,28 @@ def make_validation_test(df,
     eoo_long = df_long["end of observation"].values
     eoo_short = list(map(read_data.str_to_datetime, eoo_short))
     eoo_long = list(map(read_data.str_to_datetime, eoo_long))
+    time_delta = datetime.timedelta(0, time_threshold*3600)
+    eoo_sample = []
 #    eoo_sample_short = []*sample_size_half
-    for count in range(sample_size):
+    for count in range(sample_size_half*2):
         if count % 2==0:
             eoo = random.choice(eoo_short)
         else:
             eoo = random.choice(eoo_long)
-        eoo_sample_short.append(eoo)
+        eoo_sample.append(eoo)
+        eoo_short = [x_short for x_short in eoo_short if abs(x_short-eoo)<time_delta]
+        eoo_long = [x_long for x_long in eoo_long if abs(x_long-eoo)<time_delta]
+        
+        assert len(eoo_short)+len(eoo_long) > len(df) - time_threshold*6*2 - 1
 #    time_to_eruptions = 
     
     
 def main():     
-    make_model(input_shape=(29,29,144,1))  
+    df_train, df_validation, df_test = devide_data(time_step=24*6)
+    print(len(df_train), len(df_validation), len(df_test))
+    print(df_train[:3])
+#    make_model(input_shape=(29,29,144,1))  
+ 
     
 if __name__ == '__main__':
     main()
