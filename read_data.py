@@ -99,6 +99,11 @@ def check_timedelta(path_to_image_csv = "../data/1-6.2014.csv",
     print("initial time =", df_image.iloc[0,0].split(".")[0])
     print("final time =", df_image.iloc[-1,0].split(".")[0])
 
+def datetime_to_str(time):
+    return time.strftime('%Y-%m-%d %H:%M:%S')
+
+def str_to_datetime(time):
+    return datetime.datetime.strptime(time, '%Y/%m/%d %H:%M')
 # ミュオグラフィのデータを扱いやすい形に整形
 def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
                    path_to_reform_csv ="../data/1-6.2014_reform.csv",
@@ -201,8 +206,6 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
 #    df.to_csv(path_to_observation_csv, index=None)
     
 #    return df
-def datetime_to_str(time):
-    return time.strftime('%Y-%m-%d %H:%M:%S')
     
 def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
                         path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",

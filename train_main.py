@@ -46,11 +46,14 @@ def make_data(path_to_observation_time_step_csv = "../data/observation_timestep%
 def make_validation_test(df,
                          time_step=6, # time_step*10 分間の観測データを使う
                          time_threshold=24, # 単位は hour
+                         sample_size=100,
                          ):
     df_short = df[df["time to eruption"] <= time_threshold]
     df_long = df[df["time to eruption"] > time_threshold]
-    end_of_observations = df["end of observation"].values
-    time_to_eruptions = 
+    eoo_short = df_short["end of observation"].values
+    eoo_long = df_long["end of observation"].values
+    for 
+#    time_to_eruptions = 
     
     
 def main():     
