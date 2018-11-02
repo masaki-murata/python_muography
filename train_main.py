@@ -31,8 +31,10 @@ def make_model(input_shape,
     
     model.summary()
 
+# データの重複がないように train, validation, test に分ける
 def devide_data(path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
                 time_step=6, # time_step*10 分間の観測データを使う
+#                time_threshold,
                 ratio = [0.6, 0.2, 0.2],
                 ):
     df_observation = pd.read_csv(path_to_observation_time_step_csv % time_step)
@@ -42,8 +44,8 @@ def devide_data(path_to_observation_time_step_csv = "../data/observation_timeste
     
     # データフレームを３つに分割
     df_train = df_observation[:train_num]
-    df_validation = df_observation[train_num:train_num+validation_num]
-    df_test = df_observation[train_num+validation_num:]
+    df_validation = df_observation[train_num+time_step:train_num+validation_num]
+    df_test = df_observation[train_num+validation_num+time_step:]
     
     return df_train, df_validation, df_test
 
@@ -56,9 +58,12 @@ def make_validation_test(df,
     df_long = df[df["time to eruption"] > time_threshold]
     eoo_short = df_short["end of observation"].values
     eoo_long = df_long["end of observation"].values
-    eoo_short = list(map(read_data.str_to_datetime, eoo_short))
-    eoo_long = list(map(read_data.str_to_datetime, eoo_long))
-    time_delta = datetime.timedelta(0, time_threshold*3600)
+    eoo_short = list(map(lambda x: read_data.str_to_datetime(x,slash_dash="dash"), eoo_short))
+    eoo_long = list(map(lambda x: read_data.str_to_datetime(x,slash_dash="dash"), eoo_long))
+    print(len(eoo_short), len(eoo_long))
+    print(type(eoo_short))
+    time_delta = datetime.timedelta(0, time_step*600)
+    print(time_delta)
     eoo_sample = []
 #    eoo_sample_short = []*sample_size_half
     for count in range(sample_size_half*2):
@@ -67,18 +72,22 @@ def make_validation_test(df,
         else:
             eoo = random.choice(eoo_long)
         eoo_sample.append(eoo)
-        eoo_short = [x_short for x_short in eoo_short if abs(x_short-eoo)<time_delta]
-        eoo_long = [x_long for x_long in eoo_long if abs(x_long-eoo)<time_delta]
+        eoo_short_next = [x_short for x_short in eoo_short if abs(x_short-eoo)>=time_delta]
+        eoo_long = [x_long for x_long in eoo_long if abs(x_long-eoo)>=time_delta]
+        print(type(eoo_short))
+        print(set(eoo_short_next)-set(eoo_short))
+        eoo_short = eoo_short_next
         
-        assert len(eoo_short)+len(eoo_long) > len(df) - time_threshold*6*2 - 1
-        count += 1
+        count =+ 1
+        assert len(eoo_short)+len(eoo_long) > len(df) - time_step*6*2*count - 3, \
+        "{0},{1},{2},{3}".format(len(eoo_short), len(eoo_long), len(df), count)
     return eoo_sample
 #    time_to_eruptions = 
     
     
 def main():     
     df_train, df_validation, df_test = devide_data(time_step=24*6)
-    eoo_sample=make_validation_test(df_validation, slash_dash="dash")
+    eoo_sample=make_validation_test(df=df_validation, time_step=24*6)
     print(len(eoo_sample))
 #    make_model(input_shape=(29,29,144,1))  
  
