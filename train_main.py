@@ -50,7 +50,7 @@ def devide_data(path_to_observation_time_step_csv = "../data/observation_timeste
     return df_train, df_validation, df_test
 
 def make_validation_test(df,
-                         time_step=6, # time_step*10 分間の観測データを使う
+                         period_observation=6, # time_step*10 分間の観測データを使う
                          time_threshold=24, # 単位は hour
                          sample_size_half=50,
                          ):
@@ -62,7 +62,7 @@ def make_validation_test(df,
     eoo_long = list(map(lambda x: read_data.str_to_datetime(x,slash_dash="dash"), eoo_long))
     print(len(eoo_short), len(eoo_long))
     print(type(eoo_short))
-    time_delta = datetime.timedelta(0, time_step*600)
+    time_delta = datetime.timedelta(0, period_observation*600)
     print(time_delta)
     eoo_sample = []
 #    eoo_sample_short = []*sample_size_half
@@ -72,14 +72,13 @@ def make_validation_test(df,
         else:
             eoo = random.choice(eoo_long)
         eoo_sample.append(eoo)
-        eoo_short_next = [x_short for x_short in eoo_short if abs(x_short-eoo)>=time_delta]
+        eoo_short = [x_short for x_short in eoo_short if abs(x_short-eoo)>=time_delta]
         eoo_long = [x_long for x_long in eoo_long if abs(x_long-eoo)>=time_delta]
         print(type(eoo_short))
-        print(set(eoo_short_next)-set(eoo_short))
-        eoo_short = eoo_short_next
+        print(len(eoo_short))
         
-        count =+ 1
-        assert len(eoo_short)+len(eoo_long) > len(df) - time_step*6*2*count - 3, \
+        count += 1
+        assert len(eoo_short)+len(eoo_long) > len(df) - (period_observation*2+1)*count - 3, \
         "{0},{1},{2},{3}".format(len(eoo_short), len(eoo_long), len(df), count)
     return eoo_sample
 #    time_to_eruptions = 
@@ -87,7 +86,7 @@ def make_validation_test(df,
     
 def main():     
     df_train, df_validation, df_test = devide_data(time_step=24*6)
-    eoo_sample=make_validation_test(df=df_validation, time_step=24*6)
+    eoo_sample=make_validation_test(df=df_validation, period_observation=6*6)
     print(len(eoo_sample))
 #    make_model(input_shape=(29,29,144,1))  
  
