@@ -7,10 +7,12 @@ Created on Thu Nov  1 15:24:58 2018
 """
 
 import pandas as pd
+import random
 from keras.layers import Input, Dense, Conv3D, Flatten
 from keras.models import Model
 from keras.optimizers import Adam
 
+import read_data
 
 # CNN モデルを作る関数
 def make_model(input_shape,
@@ -46,13 +48,21 @@ def make_data(path_to_observation_time_step_csv = "../data/observation_timestep%
 def make_validation_test(df,
                          time_step=6, # time_step*10 分間の観測データを使う
                          time_threshold=24, # 単位は hour
-                         sample_size=100,
+                         sample_size_half=50,
                          ):
     df_short = df[df["time to eruption"] <= time_threshold]
     df_long = df[df["time to eruption"] > time_threshold]
     eoo_short = df_short["end of observation"].values
     eoo_long = df_long["end of observation"].values
-    for 
+    eoo_short = list(map(read_data.str_to_datetime, eoo_short))
+    eoo_long = list(map(read_data.str_to_datetime, eoo_long))
+#    eoo_sample_short = []*sample_size_half
+    for count in range(sample_size):
+        if count % 2==0:
+            eoo = random.choice(eoo_short)
+        else:
+            eoo = random.choice(eoo_long)
+        eoo_sample_short.append(eoo)
 #    time_to_eruptions = 
     
     
