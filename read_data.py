@@ -214,9 +214,9 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
     
 def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
                         path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
-                        time_step=6, # time_step*10 分間の観測データを使う
+                        period_observation=6, # period_observation*10 分間の観測データを使う
                         ):
-    ts_minus = time_step-1
+    ts_minus = period_observation-1
     df_observation = pd.read_csv(path_to_observation_csv)
     df_observation = df_observation.dropna(axis=0, how="all")    
     end_of_observations = df_observation["end of observation"].values
@@ -243,7 +243,7 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
     df_restricted = df_observation[df_observation["end of observation"].isin(e_o_b_time_step)]
     print(len(df_restricted))
     print(df_restricted[:3])
-    df_restricted.to_csv(path_to_observation_time_step_csv % time_step)
+    df_restricted.to_csv(path_to_observation_time_step_csv % period_observation)
 
 
 # time to eruption を再定義

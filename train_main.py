@@ -33,25 +33,25 @@ def make_model(input_shape,
 
 # データの重複がないように train, validation, test に分ける
 def devide_data(path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
-                time_step=6, # time_step*10 分間の観測データを使う
+                period_observation=6, # period_observation*10 分間の観測データを使う
 #                time_threshold,
                 ratio = [0.6, 0.2, 0.2],
                 ):
-    df_observation = pd.read_csv(path_to_observation_time_step_csv % time_step)
+    df_observation = pd.read_csv(path_to_observation_time_step_csv % period_observation)
     train_num = int(len(df_observation)*ratio[0])
     validation_num = int(len(df_observation)*ratio[1])
 #    test_num = len(df_observation) - train_num - validation_num
     
     # データフレームを３つに分割
     df_train = df_observation[:train_num]
-    df_validation = df_observation[train_num+time_step:train_num+validation_num]
-    df_test = df_observation[train_num+validation_num+time_step:]
+    df_validation = df_observation[train_num+period_observation:train_num+validation_num]
+    df_test = df_observation[train_num+validation_num+period_observation:]
     
     return df_train, df_validation, df_test
 
 def make_validation_test(df,
-                         period_observation=6, # time_step*10 分間の観測データを使う
-                         time_threshold=24, # 単位は hour
+                         period_observation=6, # period_observation*10 分間の観測データを使う
+                         prediction_hour=24, # prediction_hour 時間までの予測ができるように
                          sample_size_half=50,
                          ):
     df_short = df[df["time to eruption"] <= time_threshold]
@@ -74,7 +74,6 @@ def make_validation_test(df,
         eoo_sample.append(eoo)
         eoo_short = [x_short for x_short in eoo_short if abs(x_short-eoo)>=time_delta]
         eoo_long = [x_long for x_long in eoo_long if abs(x_long-eoo)>=time_delta]
-        print(type(eoo_short))
         print(len(eoo_short))
         
         count += 1
