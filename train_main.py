@@ -6,10 +6,13 @@ Created on Thu Nov  1 15:24:58 2018
 @author: muratamasaki
 """
 
+import pandas as pd
 from keras.layers import Input, Dense, Conv3D, Flatten
 from keras.models import Model
+from keras.optimizers import Adam
 
 
+# CNN モデルを作る関数
 def make_model(input_shape,
                ):
     input_img = Input(shape=input_shape)
@@ -25,6 +28,25 @@ def make_model(input_shape,
     model.compile(loss='mean_squared_error', optimizer=opt_generator)
     
     model.summary()
+
+def make_data(path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
+              time_step=6, # time_step*10 分間の観測データを使う
+              ratio = [0.6, 0.2, 0.2],
+              ):
+    df_observation = pd.read_csv(path_to_observation_time_step_csv % time_step)
+    train_num = len(df_observation)*ratio[0]
+    validation_num = len(df_observation)*ratio[0]
+    test_num = len(df_observation) - train_num - validation_num
+    
+    # データフレームを３つに分割
+    df_train = df_observation[:train_num]
+    df_validation = df_observatidf_observationon[train_num:train_num+validation_num]
+    df_test = df_observation[train_num+validation_num:]
+
+def make_validation_test(df,
+                         time_step=6, # time_step*10 分間の観測データを使う
+                         ):
+    
     
 def main():     
     make_model(input_shape=(29,29,144,1))  
