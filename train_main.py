@@ -71,13 +71,15 @@ def make_validation_test(df,
         eoo_long = [x_long for x_long in eoo_long if abs(x_long-eoo)<time_delta]
         
         assert len(eoo_short)+len(eoo_long) > len(df) - time_threshold*6*2 - 1
+        count += 1
+    return eoo_sample
 #    time_to_eruptions = 
     
     
 def main():     
     df_train, df_validation, df_test = devide_data(time_step=24*6)
-    print(len(df_train), len(df_validation), len(df_test))
-    print(df_train[:3])
+    eoo_sample=make_validation_test(df_validation, slash_dash="dash")
+    print(len(eoo_sample))
 #    make_model(input_shape=(29,29,144,1))  
  
     

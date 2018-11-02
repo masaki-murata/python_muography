@@ -102,8 +102,13 @@ def check_timedelta(path_to_image_csv = "../data/1-6.2014.csv",
 def datetime_to_str(time):
     return time.strftime('%Y-%m-%d %H:%M:%S')
 
-def str_to_datetime(time):
-    return datetime.datetime.strptime(time, '%Y/%m/%d %H:%M')
+def str_to_datetime(time,
+                    slash_dash="slash",
+                    ):
+    if slash_dash=="slash":
+        return datetime.datetime.strptime(time, '%Y/%m/%d %H:%M')
+    if slash_dash=="dash":
+        return datetime.datetime.strptime(time, '%Y-%m-%d %H:%M')
 # ミュオグラフィのデータを扱いやすい形に整形
 def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
                    path_to_reform_csv ="../data/1-6.2014_reform.csv",
