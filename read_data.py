@@ -109,7 +109,8 @@ def str_to_datetime(time="",
         return datetime.datetime.strptime(time, '%Y/%m/%d %H:%M')
     if slash_dash=="dash":
         return datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
-# ミュオグラフィのデータを扱いやすい形に整形
+    
+# ミュオグラフィのデータを扱いやすい形（時間、画素値に分ける）に整形
 def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
                    path_to_reform_csv ="../data/1-6.2014_reform.csv",
                    ):
@@ -150,7 +151,7 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
                          path_to_observation_csv = "../data/observation.csv",
                          time_unit="hour",
                          ):
-    # 単位時間 を秒単位で表す
+    # time to eruption の単位時間 を秒単位で表す
     if time_unit == "minute":
         t_u = 60.0     
     elif time_unit == "hour":
@@ -211,56 +212,58 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
 #    df.to_csv(path_to_observation_csv, index=None)
     
 #    return df
-    
+
+# 観測時間分の観測データが存在する行だけを抽出する
 def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
-                        path_to_observation_time_step_csv = "../data/observation_timestep%03d.csv",
-                        period_observation=6, # period_observation*10 分間の観測データを使う
+                        path_to_observation_hour_csv = "../data/observationhour%03d.csv",
+                        observation_hour=24, # period_observation 時間の観測データを使う
                         ):
-    ts_minus = period_observation-1
+    time_step = observation_hour*6-1 # １０分単位に変換、time_step*10 分までの継続データがあればその行を残す
     df_observation = pd.read_csv(path_to_observation_csv)
     df_observation = df_observation.dropna(axis=0, how="all")    
-    end_of_observations = df_observation["end of observation"].values
+    eoos = df_observation["end of observation"].values # eoo=end of observation
 #    print(end_of_observations)
 #    e_o_b_before = datetime.datetime.strptime(end_of_observations[0], '%Y-%m-%d %H:%M:%S')
 #    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)] + ["time to eruption",]
 #    df = pd.DataFrame(columns = columns)
-    e_o_b_time_step = []
-    for t in range(ts_minus, len(df_observation)):
+    eoo_time_step = []
+    for t in range(time_step, len(df_observation)):
 #        time_str = df_image.iloc[t,0].split(".")[0]
-        e_o_b_before = datetime.datetime.strptime(end_of_observations[t-ts_minus], '%Y-%m-%d %H:%M:%S')
-        e_o_b_after = datetime.datetime.strptime(end_of_observations[t], '%Y-%m-%d %H:%M:%S')
-        time_delta = e_o_b_after-e_o_b_before
-        if time_delta == datetime.timedelta(minutes=10*ts_minus):
-            e_o_b_time_step.append(e_o_b_after)
+        eoo_before = datetime.datetime.strptime(eoos[t-time_step], '%Y-%m-%d %H:%M:%S')
+        eoo_after = datetime.datetime.strptime(eoos[t], '%Y-%m-%d %H:%M:%S')
+        time_delta = eoo_after-eoo_before
+        if time_delta == datetime.timedelta(minutes=10*time_step): 
+            # 時間差が行の間隔に等しい、つまり欠損データが無ければそれを加える
+            eoo_time_step.append(eoo_after)
             print("\r%d" % t, end="")
-        e_o_b_before = e_o_b_after+datetime.timedelta(minutes=0)
-    e_o_b_time_step = list(map(datetime_to_str, e_o_b_time_step))
+    eoo_time_step = list(map(datetime_to_str, eoo_time_step))
 #    print(e_o_b_time_step[:3])
     print("")
     print(len(df_observation))
     
-    # 次はdf_observationから e_o_b_time_step に含まれるものだけ抽出しよう
-    df_restricted = df_observation[df_observation["end of observation"].isin(e_o_b_time_step)]
+    # df_observationから e_o_b_time_step に含まれるものだけ抽出しよう
+    df_restricted = df_observation[df_observation["end of observation"].isin(eoo_time_step)]
     print(len(df_restricted))
     print(df_restricted[:3])
-    df_restricted.to_csv(path_to_observation_time_step_csv % period_observation)
+    df_restricted.to_csv(path_to_observation_hour_csv % observation_hour)
 
-
+"""
 # time to eruption を再定義
 # ここは学習時でもいいかも
-def deform_times(path_to_observation_time_step_csv = "../data/observation_timestep144.csv",
-                 path_to_observation_ts_th =  "../data/observation_ts%03d.csv",
-                 time_threshold=24, #単位は hour
+def deform_times(path_to_observation_hour_csv = "../data/obsevationhour%03d.csv",
+                 path_to_observation_hour_prediction_hour_csv =  "../data/observationhour%03d_predictionhour%03d.csv",
+                 observation_hour=24,
+                 prediction_hour=24, #単位は hour
                  ):
-    path_to_observation_ts_th = path_to_observation_time_step_csv[:-4] +\
-    "timethreshold%03d.csv" % time_threshold
+#    path_to_observation_ts_th = path_to_observation_time_step_csv[:-4] +\
+#    "timethreshold%03d.csv" % prediction_hour
     # 一定時間後を圧縮
     def deform_time(time):
-        if time > time_threshold:
-            arg_tanh = (time-time_threshold) / time_threshold
-            time = time_threshold + time_threshold*math.tanh(arg_tanh)
+        if time > prediction_hour:
+            arg_tanh = (time-prediction_hour) / prediction_hour
+            time = prediction_hour + prediction_hour*math.tanh(arg_tanh)
         return time
-    df_observation_t_s = pd.read_csv(path_to_observation_time_step_csv)
+    df_observation_t_s = pd.read_csv(path_to_observation_hour_csv % observation_hour)
     time_to_eruptions = df_observation_t_s["time to eruption"].values
     deformed_times = list(map(deform_time, time_to_eruptions))
     print(len(deformed_times))
@@ -271,8 +274,8 @@ def deform_times(path_to_observation_time_step_csv = "../data/observation_timest
     df_observation_t_s = df_observation_t_s.iloc[:,:-1]
     df_eruption = pd.DataFrame(deformed_times,columns=["time to eruption"])
     df_deformed_time = pd.concat([df_observation_t_s,df_eruption], axis=1)
-    df_deformed_time.to_csv(path_to_observation_ts_th, index=None)
-    
+    df_deformed_time.to_csv(path_to_observation_hour_prediction_hour_csv % (observation_hour, prediction_hour), index=None)
+"""    
 #            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
 #            df.append(series, ignore_index = True)
 #        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
@@ -281,8 +284,8 @@ def deform_times(path_to_observation_time_step_csv = "../data/observation_timest
 
 def main():     
 #    make_observation_csv()
-#    remove_time_deficit(time_step=24*6)         
-    deform_times()
+    remove_time_deficit(observation_hour=6)         
+#    deform_times(observation_hour=6, prediction_hour=24)
 
 if __name__ == '__main__':
     main()
