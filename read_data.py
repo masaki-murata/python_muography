@@ -284,6 +284,7 @@ def deform_times(path_to_observation_hour_csv = "../data/obsevationhour%03d.csv"
 
 
 def main():  
+    print("start main")
 #    df = combine_muogram(if_save=True)
 #    check_timedelta(path_to_image_csv = "../data/1-6.2014-2017.csv")
 #    reform_muogram(path_to_image_csv = "../data/1-6.2014-2017.csv")
