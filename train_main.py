@@ -130,6 +130,7 @@ def make_validation_test(df,
 #    time_to_eruptions = 
 
 def df_to_data(df,
+               eoo,
                prediction_hour=24,
                observtion_hour=6,
                input_shape=(29,29,1),
