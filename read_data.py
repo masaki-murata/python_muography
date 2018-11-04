@@ -77,8 +77,24 @@ def eruption_data(path_to_eruption_csv="../data/erupt.csv"):
         for observation_end_time in observation_end_times:
             if eruption_time > observation_end_times:
 """
+
+# ミュオグラムのデータを統合
+def combine_muogram(path_to_csvs=["../data/1-6.2014.csv","../data/1-6.2017.csv"],
+                    if_save=False,
+                    ):
+    path_to_total_csv = "../data/1-6.2014-2017.csv"
+    dfs = []
+    for path_to_csv in path_to_csvs:
+        dfs.append(pd.read_csv(path_to_csv, header=None))
+    df_total = pd.concat(dfs)
+    
+    if if_save:
+        df_total.to_csv(path_to_total_csv, header=False, index=False)
+    
+    return df_total
+
 # ミュオグラフィの観測時間が１０分刻みかどうか確認
-def check_timedelta(path_to_image_csv = "../data/1-6.2014.csv",
+def check_timedelta(path_to_image_csv = "../data/1-6.2014-2017.csv",
                     ):
     df_image = pd.read_csv(path_to_image_csv, header=None)
     df_image = df_image.dropna(axis=0, how="all")    
@@ -112,8 +128,8 @@ def str_to_datetime(time="",
     
 # ミュオグラフィのデータを扱いやすい形（時間、画素値に分ける）に整形
 def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
-                   path_to_reform_csv ="../data/1-6.2014_reform.csv",
                    ):
+    path_to_reform_csv = path_to_image_csv[:-4] + "_reform.csv"
     df_image = pd.read_csv(path_to_image_csv, header=None)
     df_image = df_image.dropna(axis=0, how="all")    
     
@@ -124,25 +140,10 @@ def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
     df_times = df_times.applymap(get_end_time)
     df_times.columns = ["end of observation"]
     
-#    print(pd.concat([df_times,df_pixels], axis=1))
     df_reform = pd.concat([df_times,df_pixels], axis=1)
     df_reform.to_csv(path_to_reform_csv, index=None)
     print(df_reform.info())
 
-#    columns = ["end of observation",] + ["pixel%03d" % xy for xy in range(1, 842)]
-#    df_reform = pd.DataFrame(columns = columns)
-#    for i in range(len(df_image)):
-##    for i in range(5):
-#        time_str = df_image.iloc[i,0].split(".")[0]
-#        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
-#        end_of_observation = start_of_observation + datetime.timedelta(minutes=10)
-#
-#        pixel_values = list(row_to_numpy(row=df_image.iloc[i,:].values, if_reshape=False))
-#        series = pd.Series([end_of_observation,]+pixel_values, index=df_reform.columns)
-#        df_reform = df_reform.append(series, ignore_index = True)
-#        print("\r{0}".format(end_of_observation), end="")
-#    
-#    df_reform.to_csv(path_to_reform_csv, index=None)
     
 # 観測終了時間、画素値、噴火までの時間を csv 形式で保存
 def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
@@ -282,9 +283,12 @@ def deform_times(path_to_observation_hour_csv = "../data/obsevationhour%03d.csv"
 #    df.to_csv(path_to_observation_time_step_csv % time_step, index=None)
 
 
-def main():     
+def main():  
+#    df = combine_muogram(if_save=True)
+#    check_timedelta(path_to_image_csv = "../data/1-6.2014-2017.csv")
+    reform_muogram(path_to_image_csv = "../data/1-6.2014-2017.csv")
 #    make_observation_csv()
-    remove_time_deficit(observation_hour=6)         
+#    remove_time_deficit(observation_hour=6)         
 #    deform_times(observation_hour=6, prediction_hour=24)
 
 if __name__ == '__main__':

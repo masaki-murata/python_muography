@@ -82,15 +82,16 @@ def make_validation_test(df,
     time_step_observation = observation_hour*6 # １０分単位に変換
     df_short = df[df["time to eruption"] <= prediction_hour]
     df_long = df[df["time to eruption"] > prediction_hour]
+    print(len(df_short), len(df_long))
     # eoo = end of observation
     eoo_short = df_short["end of observation"].values
     eoo_long = df_long["end of observation"].values
     eoo_short = list(map(lambda x: read_data.str_to_datetime(x,slash_dash="dash"), eoo_short))
     eoo_long = list(map(lambda x: read_data.str_to_datetime(x,slash_dash="dash"), eoo_long))
-    print(len(eoo_short), len(eoo_long))
-    print(type(eoo_short))
+#    print(len(eoo_short), len(eoo_long))
+#    print(type(eoo_short))
     time_delta = datetime.timedelta(0, observation_hour*3600)
-    print(time_delta)
+#    print(time_delta)
     eoo_sample = []
 #    eoo_sample_short = []*sample_size_half
     for count in range(sample_size_half*2):
@@ -101,7 +102,7 @@ def make_validation_test(df,
         eoo_sample.append(eoo)
         eoo_short = [x_short for x_short in eoo_short if abs(x_short-eoo)>=time_delta]
         eoo_long = [x_long for x_long in eoo_long if abs(x_long-eoo)>=time_delta]
-        print(len(eoo_short))
+#        print(len(eoo_short))
         
         count += 1
         assert len(eoo_short)+len(eoo_long) > len(df) - (time_step_observation*2+1)*count - 1, \
@@ -168,8 +169,13 @@ def train(input_shape=(29,29,1),
     # load data
     df_train, df_validation, df_test = devide_data(observation_hour=observation_hour)
     
-    df_validation=make_validation_test(df=df_validation, observation_hour=observation_hour)
-    df_test=make_validation_test(df=df_test, observation_hour=observation_hour)
+    df_validation=make_validation_test(df=df_validation,
+                                       sample_size_half=val_sample_size_half,
+                                       observation_hour=observation_hour)
+    df_test=make_validation_test(df=df_test, 
+                                 sample_size_half=test_sample_size_half,
+                                 observation_hour=observation_hour)
+    print("data, label")
     
 #    train_data, train_label = df_to_data(df=df_train, prediction_hour=prediction_hour)
     val_data, val_label = df_to_data(df=df_validation, prediction_hour=prediction_hour)
@@ -221,14 +227,22 @@ def evaluate_test(df_test,
 
     
 def main():     
-    df_train, df_validation, df_test = devide_data(observation_hour=6)
-    df_validation=make_validation_test(df=df_validation, observation_hour=6)
-    print(len(df_validation))
-    print(df_validation.columns)
-    val_data, val_label = df_to_data(df_validation, prediction_hour=24)
-    print(val_data.shape)
+#    df_train, df_validation, df_test = devide_data(observation_hour=6)
+#    df_validation=make_validation_test(df=df_validation, observation_hour=6)
+#    print(len(df_validation))
+#    print(df_validation.columns)
+#    val_data, val_label = df_to_data(df_validation, prediction_hour=24)
+#    print(val_data.shape)
 #    make_model(input_shape=(29,29,144,1))  
- 
+    train(input_shape=(29,29,1),
+          observation_hour=6,
+          prediction_hour=24,
+          val_sample_size_half=50,
+          test_sample_size_half=50,
+          epochs=10,
+          batch_size=128,
+          nb_gpus=1,
+          )
     
 if __name__ == '__main__':
     main()
