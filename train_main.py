@@ -29,7 +29,7 @@ if os.name=='posix':
     
     set_session(tf.Session(config=config))
 
-
+# 噴火までの時間を圧縮する関数
 def deform_time(time=1, # 噴火までの時間を時間単位で
                 prediction_hour=24, # 噴火を予期したい時間を時間単位で
                 ):
@@ -56,22 +56,33 @@ def make_model(input_shape,
     model.summary()
 
 # データの重複がないように train, validation, test に分ける
-def devide_data(path_to_observation_hour_csv = "../data/observationhour%03d.csv",
+def devide_data(#end_of_observations=[],
+                #path_to_observation_hour_csv = "../data/observationhour%03d.csv",
+                days_period=10,
                 observation_hour=6, # period_observation 時間の観測データを使う
                 ratio = [0.7, 0.15, 0.15],
                 ):
+    path_to_csv =  "../data/observation_dp%03d.csv" % (days_period)
+
+    df_observation = pd.read_csv(path_to_csv)
+    end_of_observations = read_data.remove_time_deficit(observation_hour)
     time_step_observation = observation_hour*6 # １０分単位に変換
-    df_observation = pd.read_csv(path_to_observation_hour_csv % observation_hour)
-    train_num = int(len(df_observation)*ratio[0])
-    validation_num = int(len(df_observation)*ratio[1])
-#    test_num = len(df_observation) - train_num - validation_num
+    train_num = int(len(end_of_observations)*ratio[0])
+    validation_num = int(len(end_of_observations)*ratio[1])
     
-    # データフレームを３つに分割
-    df_train = df_observation[:train_num]
-    df_validation = df_observation[train_num+time_step_observation:train_num+validation_num]
-    df_test = df_observation[train_num+validation_num+time_step_observation:]
+    # ３つに分割
+    eoo_train = end_of_observations[:train_num]
+    eoo_validation = end_of_observations[train_num+time_step_observation:train_num+validation_num]
+    eoo_test = end_of_observations[train_num+validation_num+time_step_observation:]
     
-    return df_train, df_validation, df_test
+    return eoo_train, eoo_validation, eoo_test
+    
+#    df_train = df_observation[df_observation["end of observation"].isin(eoo_train)]
+#    df_train = df_observation[:train_num]
+#    df_validation = df_observation[train_num+time_step_observation:train_num+validation_num]
+#    df_test = df_observation[train_num+validation_num+time_step_observation:]
+#    
+#    return df_train, df_validation, df_test
 
 # validation と test ではデータの重複がないように抽出
 def make_validation_test(df,
@@ -116,6 +127,7 @@ def make_validation_test(df,
 
 def df_to_data(df,
                prediction_hour=24,
+               observtion_hour=6,
                input_shape=(29,29,1),
                ):
     data = np.array(df.loc[:,"pixel001":"pixel841"])
@@ -158,6 +170,7 @@ def batch_iter(df_train,
 
 def train(input_shape=(29,29,1),
           ratio=[0.7,0.15,0.15],
+          days_period=30,
           observation_hour=6,
           prediction_hour=24,
           val_sample_size_half=50,
@@ -168,9 +181,15 @@ def train(input_shape=(29,29,1),
           ):
     
     # load data
-    df_train, df_validation, df_test = devide_data(observation_hour=observation_hour,
-                                                   ratio=ratio,
-                                                   )
+    eoo_train, eoo_validation, eoo_test = devide_data(days_period=days_period,
+                                                      observation_hour=observation_hour,
+                                                      ratio=ratio,
+                                                      )
+    
+#    df_train, df_validation, df_test = devide_data(days_period=days_period,
+#                                                   observation_hour=observation_hour,
+#                                                   ratio=ratio,
+#                                                   )
     
     df_validation=make_validation_test(df=df_validation,
                                        sample_size_half=val_sample_size_half,
@@ -239,6 +258,7 @@ def main():
 #    make_model(input_shape=(29,29,144,1))  
     train(input_shape=(29,29,1),
           ratio=[0.5,0.25,0.25],
+          days_period=30,
           observation_hour=6,
           prediction_hour=24,
           val_sample_size_half=50,
