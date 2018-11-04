@@ -87,7 +87,7 @@ def devide_data(#end_of_observations=[],
 # validation と test ではデータの重複がないように抽出
 def make_validation_test(df,
                          eoo,
-                         observation_hour=6, # period_observation 時間の観測データを使う
+                         observation_hour=6, # observation_hour 時間の観測データを使う
                          prediction_hour=24, # prediction_hour 時間までの予測ができるように
                          sample_size_half=50,
                          ):
@@ -129,19 +129,50 @@ def make_validation_test(df,
 #    return df
 #    time_to_eruptions = 
 
-def df_to_data(df,
-               eoo,
-               prediction_hour=24,
-               observtion_hour=6,
-               input_shape=(29,29,1),
-               ):
-    data = np.array(df.loc[:,"pixel001":"pixel841"])
-    data = data.reshape((len(data),)+input_shape)
+# 観測終了時間が end of obsevation となる画像を作成
+def eoo_to_data(df, 
+                eoo,
+                prediction_hour=24,
+                observation_hour=6,
+                image_shape=(29,29,1),
+                ):
+    movie_shape = (observation_hour*6,) + image_shape
+    time_delta = datetime.timedelta(minutes=(observation_hour*60-10))
+    initial_time = read_data.datetime_to_str(eoo, slash_dash="dash") - time_delta
+#    eoo_list = [time for x in range]
+    initial_time = read_data.str_to_datetime(initial_time)
+    df = df.loc[initial_time:eoo]
+    
+    image = np.array(df.loc[:,"pixel001":"pixel841"])
+    image = image.reshape(movie_shape) # この reshape が想定通り動くかはチェックする必要あり
     label = df["time to eruption"].values
     label = np.array([deform_time(time, prediction_hour) for time in label])
     label = label.reshape((len(label),1))
+    
+    return image, label
+    
+def df_to_data(df,
+               eoos,
+               prediction_hour=24,
+               observtion_hour=6,
+               image_shape=(29,29,1),
+               ):
+    movie_shape = (observation_hour*6,) + image_shape
+    input_shape = (len(eoos),) + movie_shape
+    data = np.zeros(input_shape)
+    labels = np.zeros(len(eoos), 1)
+    count = 0
+    for eoo in eoos:
+        data[count], labels[count] = eoo_to_data(df, eoo, prediction_hour, observtion_hour)
+        count += 1
+#    df = df[df["end of observation"].isin(eoo)]
+#    data = np.array(df.loc[:,"pixel001":"pixel841"])
+#    data = data.reshape((len(data),)+input_shape)
+#    label = df["time to eruption"].values
+#    label = np.array([deform_time(time, prediction_hour) for time in label])
+#    label = label.reshape((len(label),1))
 
-    return data, label
+    return data, labels
 
 
 def batch_iter(df_train,
@@ -217,7 +248,7 @@ def train(input_shape=(29,29,1),
     print("data, label")
     
 #    train_data, train_label = df_to_data(df=df_train, prediction_hour=prediction_hour)
-    val_data, val_label = df_to_data(df=df_validation, prediction_hour=prediction_hour)
+    val_data, val_label = df_to_data(df=df, eoo=eoo_validation, prediction_hour=prediction_hour)
     test_data, test_label = df_to_data(df=df_test, prediction_hour=prediction_hour)
 
     # load model
