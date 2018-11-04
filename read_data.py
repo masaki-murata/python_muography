@@ -214,13 +214,32 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
     
 #    return df
 
+# 無噴火期のデータを削除
+def remove_no_eruption_period(df="emplty",
+                              path_to_observation_csv = "../data/observation.csv",
+#                              path_to_nop_csv = "../data/observation_nop%03d.csv",
+                              days_period=10, # days_period 日以上噴火しないものは削除
+                              ):
+    if df is "empty":
+        df = pd.read_csv(path_to_observation_csv)
+    hour_period = 24*days_period
+    
+    df = df[df["time to eruption"] < hour_period]
+    
+    return df
+    
 # 観測時間分の観測データが存在する行だけを抽出する
-def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
+def remove_time_deficit(df="empty",
+                        path_to_observation_csv = "../data/observation.csv",
                         path_to_observation_hour_csv = "../data/observationhour%03d.csv",
                         observation_hour=24, # period_observation 時間の観測データを使う
+                        if_save=False,
                         ):
     time_step = observation_hour*6-1 # １０分単位に変換、time_step*10 分までの継続データがあればその行を残す
-    df_observation = pd.read_csv(path_to_observation_csv)
+    if df is "empty":
+        df_observation = pd.read_csv(path_to_observation_csv)
+    else:
+        df_observation = df
     df_observation = df_observation.dropna(axis=0, how="all")    
     eoos = df_observation["end of observation"].values # eoo=end of observation
 #    print(end_of_observations)
@@ -246,7 +265,27 @@ def remove_time_deficit(path_to_observation_csv = "../data/observation.csv",
     df_restricted = df_observation[df_observation["end of observation"].isin(eoo_time_step)]
     print(len(df_restricted))
     print(df_restricted[:3])
-    df_restricted.to_csv(path_to_observation_hour_csv % observation_hour)
+    if if_save:
+        df_restricted.to_csv(path_to_observation_hour_csv % observation_hour)
+    
+    return df_restricted
+
+# 削除する関数を一つにまとめたもの
+def remove_all(df="empty",
+               path_to_observation_csv = "../data/observation.csv",
+               days_period=10,
+               observation_hour=24, # period_observation 時間の観測データを使う
+               if_save=False,
+               ):
+    if df is "empty":
+        df = pd.read_csv(path_to_observation_csv)
+    df = remove_no_eruption_period(df, days_period)
+    df = remove_time_deficit(df, observation_hour)
+    
+    if if_save:
+        path_to_csv =  "../data/observation_dp%03d_obh03%.csv"
+        df.to_csv(path_to_csv)
+
 
 """
 # time to eruption を再定義
@@ -285,6 +324,7 @@ def deform_times(path_to_observation_hour_csv = "../data/obsevationhour%03d.csv"
 
 def main():  
     print("start main")
+    remove_all(days_period=30, if_save=True)
 #    df = combine_muogram(if_save=True)
 #    check_timedelta(path_to_image_csv = "../data/1-6.2014-2017.csv")
 #    reform_muogram(path_to_image_csv = "../data/1-6.2014-2017.csv")

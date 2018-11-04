@@ -238,7 +238,7 @@ def main():
 #    print(val_data.shape)
 #    make_model(input_shape=(29,29,144,1))  
     train(input_shape=(29,29,1),
-          ratio=[0.7,0.15,0.15],
+          ratio=[0.5,0.25,0.25],
           observation_hour=6,
           prediction_hour=24,
           val_sample_size_half=50,
