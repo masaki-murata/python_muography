@@ -127,7 +127,7 @@ def str_to_datetime(time="",
         return datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
     
 # ミュオグラフィのデータを扱いやすい形（時間、画素値に分ける）に整形
-def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
+def reform_muogram(path_to_image_csv = "../data/1-6.2014-2017.csv",
                    ):
     path_to_reform_csv = path_to_image_csv[:-4] + "_reform.csv"
     df_image = pd.read_csv(path_to_image_csv, header=None)
@@ -147,7 +147,7 @@ def reform_muogram(path_to_image_csv = "../data/1-6.2014.csv",
     
 # 観測終了時間、画素値、噴火までの時間を csv 形式で保存
 def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
-                         path_to_reform_csv ="../data/1-6.2014_reform.csv",
+                         path_to_reform_csv ="../data/1-6.2014-2017_reform.csv",
                          path_to_eruption_list_csv="../data/eruption_list_2014-2017.csv",
                          path_to_observation_csv = "../data/observation.csv",
                          time_unit="hour",
@@ -286,8 +286,8 @@ def deform_times(path_to_observation_hour_csv = "../data/obsevationhour%03d.csv"
 def main():  
 #    df = combine_muogram(if_save=True)
 #    check_timedelta(path_to_image_csv = "../data/1-6.2014-2017.csv")
-    reform_muogram(path_to_image_csv = "../data/1-6.2014-2017.csv")
-#    make_observation_csv()
+#    reform_muogram(path_to_image_csv = "../data/1-6.2014-2017.csv")
+    make_observation_csv()
 #    remove_time_deficit(observation_hour=6)         
 #    deform_times(observation_hour=6, prediction_hour=24)
 
