@@ -64,7 +64,7 @@ def devide_data(#end_of_observations=[],
                 ):
     path_to_csv =  "../data/observation_dp%03d.csv" % (days_period)
 
-    df_observation = pd.read_csv(path_to_csv)
+#    df_observation = pd.read_csv(path_to_csv)
     end_of_observations = read_data.remove_time_deficit(observation_hour)
     time_step_observation = observation_hour*6 # １０分単位に変換
     train_num = int(len(end_of_observations)*ratio[0])
@@ -86,11 +86,13 @@ def devide_data(#end_of_observations=[],
 
 # validation と test ではデータの重複がないように抽出
 def make_validation_test(df,
+                         eoo,
                          observation_hour=6, # period_observation 時間の観測データを使う
                          prediction_hour=24, # prediction_hour 時間までの予測ができるように
                          sample_size_half=50,
                          ):
     time_step_observation = observation_hour*6 # １０分単位に変換
+    df = df[df["end of observation"].isin(eoo)]
     df_short = df[df["time to eruption"] <= prediction_hour]
     df_long = df[df["time to eruption"] > prediction_hour]
     print(len(df_short), len(df_long))
@@ -120,9 +122,11 @@ def make_validation_test(df,
         "{0},{1},{2},{3}".format(len(eoo_short), len(eoo_long), len(df), count)
     eoo_sample = list(map(lambda x: read_data.datetime_to_str(x), eoo_sample))
     
-    df = df[df["end of observation"].isin(eoo_sample)]
+    return eoo_sample
     
-    return df
+#    df = df[df["end of observation"].isin(eoo_sample)]
+#    
+#    return df
 #    time_to_eruptions = 
 
 def df_to_data(df,
@@ -179,24 +183,36 @@ def train(input_shape=(29,29,1),
           batch_size=128,
           nb_gpus=1,
           ):
+    path_to_observation = "../data/observation_daysperiod%03d.csv" % (days_period)
+    df = pd.read_csv(path_to_observation)
     
     # load data
     eoo_train, eoo_validation, eoo_test = devide_data(days_period=days_period,
                                                       observation_hour=observation_hour,
                                                       ratio=ratio,
                                                       )
+
+    eoo_validation=make_validation_test(df,
+                                        eoo=eoo_validation,
+                                        sample_size_half=val_sample_size_half,
+                                        observation_hour=observation_hour)
+    eoo_test=make_validation_test(df, 
+                                  eoo=eoo_test,
+                                  sample_size_half=test_sample_size_half,
+                                  observation_hour=observation_hour)
+
     
 #    df_train, df_validation, df_test = devide_data(days_period=days_period,
 #                                                   observation_hour=observation_hour,
 #                                                   ratio=ratio,
 #                                                   )
     
-    df_validation=make_validation_test(df=df_validation,
-                                       sample_size_half=val_sample_size_half,
-                                       observation_hour=observation_hour)
-    df_test=make_validation_test(df=df_test, 
-                                 sample_size_half=test_sample_size_half,
-                                 observation_hour=observation_hour)
+#    df_validation=make_validation_test(df=df_validation,
+#                                       sample_size_half=val_sample_size_half,
+#                                       observation_hour=observation_hour)
+#    df_test=make_validation_test(df=df_test, 
+#                                 sample_size_half=test_sample_size_half,
+#                                 observation_hour=observation_hour)
     print("data, label")
     
 #    train_data, train_label = df_to_data(df=df_train, prediction_hour=prediction_hour)
