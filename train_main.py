@@ -193,14 +193,32 @@ def train(input_shape=(29,29,1),
                                      epochs=epochs,
                                      validation_data=(val_data,val_label)
                                      )
+    return model
 
 def evaluate_test(df_test,
+                  prediction_hour=24,
+                  path_to_model="",
+                  path_to_predicted="",
                   model="empty",
+                  batch_size=128,
                   ):
+    # df からデータ取り出し
+    test_data, test_label = df_to_data(df=df_test, prediction_hour=prediction_hour)
+
     if model=="empty":
         model = keras.model.load_model(path_to_model)
         
-    print("aho")
+    predicted = model.predict(test_data, batch_size=batch_size)
+    
+    # dataframe として推定値と実際の値をリスト化
+    df_predicted = pd.DataFrame(predicted, columns=["predicted time to eruption"])
+
+    df_truth = df_test.loc[:, ["end of observation", "time to eruption"]]
+    df_truth = df_truth.rename(columns={"time to eruption":"actual time to eruption"})
+    
+    df_predicted = pd.concat([df_truth,df_predicted], axis=1)    
+    df_predicted.to_csv(path_to_predicted, index=None)
+
     
 def main():     
     df_train, df_validation, df_test = devide_data(observation_hour=6)
