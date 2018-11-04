@@ -58,7 +58,7 @@ def make_model(input_shape,
 # データの重複がないように train, validation, test に分ける
 def devide_data(path_to_observation_hour_csv = "../data/observationhour%03d.csv",
                 observation_hour=6, # period_observation 時間の観測データを使う
-                ratio = [0.6, 0.2, 0.2],
+                ratio = [0.7, 0.15, 0.15],
                 ):
     time_step_observation = observation_hour*6 # １０分単位に変換
     df_observation = pd.read_csv(path_to_observation_hour_csv % observation_hour)
@@ -157,6 +157,7 @@ def batch_iter(df_train,
 
 
 def train(input_shape=(29,29,1),
+          ratio=[0.7,0.15,0.15],
           observation_hour=6,
           prediction_hour=24,
           val_sample_size_half=50,
@@ -167,7 +168,9 @@ def train(input_shape=(29,29,1),
           ):
     
     # load data
-    df_train, df_validation, df_test = devide_data(observation_hour=observation_hour)
+    df_train, df_validation, df_test = devide_data(observation_hour=observation_hour,
+                                                   ratio=ratio,
+                                                   )
     
     df_validation=make_validation_test(df=df_validation,
                                        sample_size_half=val_sample_size_half,
