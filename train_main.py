@@ -87,7 +87,7 @@ def devide_data(#end_of_observations=[],
 #    
 #    return df_train, df_validation, df_test
 
-# validation と test ではデータの重複がないように抽出
+# validation と test では画像の重複がないように eoo を抽出
 def make_validation_test(df,
                          eoos=[],
                          observation_hour=6, # observation_hour 時間の観測データを使う
@@ -184,7 +184,46 @@ def eoos_to_data(df,
 
     return data, labels
 
+## training データをとにかく全部つくる関数
+#def make_train_data(df,
+#                    eoos_train):
 
+# バッチごとに numpy からトレーニング用のデータとラベルを作る関数
+def batch_iter_np(data, labels,
+                  prediction_hour,
+                  batch_size,
+                  ):
+    data_short = data[np.where(labels<=prediction_hour)[0]]
+    labels_short = data[np.where(labels<=prediction_hour)[0]]
+    data_long = data[np.where(labels>prediction_hour)[0]]
+    labels_long = data[np.where(labels>prediction_hour)[0]]
+
+    data_num_half = min(len(labels_short), len(labels_long))
+    steps_per_epoch = int( (data_num_half - 1) / batch_size ) + 1
+
+    def data_generator():
+        while True:
+            for batch_num in range(steps_per_epoch):
+                if batch_num==0:
+                    short_indices = np.random.randint( len( data_short ), size=data_num_half )
+                    data_short = data_short[short_indices]
+                    labels_short = labels_short[short_indices]
+                    long_indices = np.random.randint( len( data_long ), size=data_num_half )
+                    data_long = data_long[long_indices]
+                    labels_long = labels_long[long_indices]
+
+                start_index = batch_num * batch_size
+                end_index = min((batch_num + 1) * batch_size, data_num_half)
+                batch_data = np.vstack(data_short[start_index:end_index], data_long[start_index:end_index])
+                batch_labels = np.vstack(labels_short[start_index:end_index], labels_long[start_index:end_index])
+                batch_indices = np.random.randint( len( batch_labels ), size=len(batch_labels) )
+                
+                yield batch_data[batch_indices], batch_labels[batch_indices]
+
+    return steps_per_epoch, data_generator()
+    
+    
+# バッチごとに df からトレーニング用のデータとラベルを作る関数
 def batch_iter(df,
                eoos_train=[],
                prediction_hour=24,
@@ -212,14 +251,13 @@ def batch_iter(df,
                 end_index = min((batch_num + 1) * batch_size, data_num)
                 eoos_epoch = eoos_train[start_index:end_index]
 #                df_epoch = df_shuffle[start_index:end_index]
-                data, labels = eoos_to_data(df=df, 
-                                            eoos=eoos_epoch,
-#                                            prediction_hour=prediction_hour, 
-                                            observation_hour=observation_hour,
-                                            image_shape=image_shape,
-                                            )
+                batch_data, batch_labels = eoos_to_data(df=df, 
+                                                        eoos=eoos_epoch,
+                                                        observation_hour=observation_hour,
+                                                        image_shape=image_shape,
+                                                        )
 #                print("data.shape={0}, labels.shape={1}".format(data.shape, labels.shape))
-                yield data, labels
+                yield batch_data, batch_labels
     
     return steps_per_epoch, data_generator()
 
@@ -233,6 +271,7 @@ def train(image_shape=(29,29,1),
           test_sample_size_half=50,
           epochs=10,
           batch_size=128,
+          if_generator_df=True,
           nb_gpus=1,
           ):
     
@@ -244,7 +283,7 @@ def train(image_shape=(29,29,1),
                                                          observation_hour=observation_hour,
                                                          ratio=ratio,
                                                          )
-    
+
     # 長時間部分を圧縮
     df["time to eruption"] = df["time to eruption"].map(lambda time: deform_time(time,prediction_hour))
 #    eoos_train = [deform_time(eoo, prediction_hour) for eoo in eoos_train]
@@ -287,22 +326,44 @@ def train(image_shape=(29,29,1),
         model_multiple_gpu = model
         
     # train 用のデータジェネレータを作成
-    steps_per_epoch, train_gen = batch_iter(df,
-                                            eoos_train=eoos_train,
-                                            prediction_hour=prediction_hour,
-                                            observation_hour=observation_hour,
-                                            image_shape=image_shape,
-                                            batch_size=batch_size,
-                                            )
+    if if_generator_df:
+        steps_per_epoch, train_gen = batch_iter(df,
+                                                eoos_train=eoos_train,
+                                                prediction_hour=prediction_hour,
+                                                observation_hour=observation_hour,
+                                                image_shape=image_shape,
+                                                batch_size=batch_size,
+                                                )
+    else:
+        train_data, train_label = eoos_to_data(df,
+                                               eoos=eoos_train,
+                                               observation_hour=observation_hour,
+                                               image_shape=image_shape,
+                                               )
+        steps_per_epoch, train_gen = batch_iter_np(train_data, train_label,
+                                                   prediction_hour=prediction_hour,
+                                                   batch_size=batch_size,
+                                                   )
+        
     print("start train")
     # train
-    print(type(model_multiple_gpu))
     model_multiple_gpu.fit_generator(generator=train_gen,
                                      steps_per_epoch=steps_per_epoch,
                                      epochs=epochs,
                                      validation_data=(val_data,val_label),
                                      )
-
+#    if if_generator_df:
+#        model_multiple_gpu.fit_generator(generator=train_gen,
+#                                         steps_per_epoch=steps_per_epoch,
+#                                         epochs=epochs,
+#                                         validation_data=(val_data,val_label),
+#                                         )
+#    else:
+#        model_multiple_gpu.fit(train_data, train_label,
+#                               batch_size=batch_size,
+#                               epochs=epochs,
+#                               validation_data=(val_data,val_label),
+#                               )
     return model
 
 def evaluate_test(df,
@@ -342,7 +403,8 @@ def main():
     test_sample_size_half=50
     ratio=[0.6, 0.2, 0.2]
     epochs=10
-    batch_size=128
+    batch_size=256
+    if_generator=False
     nb_gpus=1
     
 #    eoos_train, eoos_validation, eoos_test = devide_data(days_period=30, observation_hour=6)
@@ -363,6 +425,7 @@ def main():
           test_sample_size_half=test_sample_size_half,
           epochs=epochs,
           batch_size=batch_size,
+          if_generator=if_generator,
           nb_gpus=nb_gpus,
           )
     
