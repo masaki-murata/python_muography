@@ -87,7 +87,7 @@ def devide_data(#end_of_observations=[],
 
 # validation と test ではデータの重複がないように抽出
 def make_validation_test(df,
-                         eoos,
+                         eoos=[],
                          observation_hour=6, # observation_hour 時間の観測データを使う
                          prediction_hour=24, # prediction_hour 時間までの予測ができるように
                          sample_size_half=50,
@@ -132,7 +132,7 @@ def make_validation_test(df,
 
 # 観測終了時間が end of obsevation となる画像を作成
 def eoo_to_data(df, 
-                eoo,
+                eoo=[],
 #                prediction_hour=24,
                 observation_hour=6,
                 image_shape=(29,29,1),
@@ -159,7 +159,7 @@ def eoo_to_data(df,
     return image, label
     
 def df_to_data(df,
-               eoos,
+               eoos=[],
 #               prediction_hour=24,
                observation_hour=6,
                image_shape=(29,29,1),
@@ -183,13 +183,13 @@ def df_to_data(df,
 
 
 def batch_iter(df,
-               eoos_train,
+               eoos_train=[],
                prediction_hour=24,
                observation_hour=6,
-               input_shape=(29,29,1),
+               image_shape=(29,29,1),
 #               train_data,
 #               train_label,
-               batch_size=32,
+               batch_size=128,
                ):
     
     data_num = len(eoos_train)
@@ -211,11 +211,12 @@ def batch_iter(df,
                                           eoos=eoos_epoch,
                                           prediction_hour=prediction_hour, 
                                           observation_hour=observation_hour,
+                                          image_shape=image_shape,
                                           )
                 
                 yield data, labels
     
-    return data_generator(), steps_per_epoch
+    return steps_per_epoch, data_generator()
 
 
 def train(image_shape=(29,29,1),
@@ -282,16 +283,19 @@ def train(image_shape=(29,29,1),
         model_multiple_gpu = model
         
     # train ようのデータジェネレータを作成
-    train_gen , steps_per_epoch= batch_iter(df,
-                                            eoos_train,
-                                            batch_size=batch_size
-                                            )
+    steps_per_epoch, train_gen= batch_iter(df,
+                                           eoos_train=eoos_train,
+                                           prediction_hour=prediction_hour,
+                                           observation_hour=observation_hour,
+                                           image_shape=image_shape,
+                                           batch_size=batch_size,
+                                           )
     
     # train
     model_multiple_gpu.fit_generator(train_gen,
                                      steps_per_epoch=steps_per_epoch,
                                      epochs=epochs,
-                                     validation_data=(val_data,val_label)
+                                     validation_data=(val_data,val_label),
                                      )
     return model
 
@@ -333,13 +337,13 @@ def main():
     nb_gpus=1
     
 #    eoos_train, eoos_validation, eoos_test = devide_data(days_period=30, observation_hour=6)
-#    print(eoos_train[0])
+##    print(eoos_train[0])
 #    path_to_observation = "../data/observation_daysperiod%03d.csv" % (days_period)
 #    df = pd.read_csv(path_to_observation)
-#    image, label = eoo_to_data(df, eoos_train[0])
+##    image, label = eoo_to_data(df, eoos_train[0])
 #    data, labels = df_to_data(df, eoos_train, observation_hour=observation_hour)
-#    print(data.sum())
-#    print(labels)
+#    print(type(data))
+#    print(type(labels))
 
     train(image_shape=image_shape,
           ratio=ratio,
