@@ -240,9 +240,10 @@ def train(image_shape=(29,29,1),
                                                          )
     
     # 長時間部分を圧縮
-    eoos_train = [deform_time(eoo,prediction_hour) for eoo in eoos_train]
-    eoos_validation = [deform_time(eoo,prediction_hour) for eoo in eoos_validation]
-    eoos_test = [deform_time(eoo,prediction_hour) for eoo in eoos_test]
+    df["time to eruption"] = df["time to eruption"].map(lambda time: deform_time(time,prediction_hour))
+#    eoos_train = [deform_time(eoo, prediction_hour) for eoo in eoos_train]
+#    eoos_validation = [deform_time(eoo,prediction_hour) for eoo in eoos_validation]
+#    eoos_test = [deform_time(eoo,prediction_hour) for eoo in eoos_test]
 
     # sampling for validation and test
     eoos_validation=make_validation_test(df,
@@ -269,8 +270,8 @@ def train(image_shape=(29,29,1),
     print("data, label")
     
 #    train_data, train_label = df_to_data(df=df_train, prediction_hour=prediction_hour)
-    val_data, val_label = df_to_data(df=df, eoos=eoos_validation, prediction_hour=prediction_hour, observation_hour=observation_hour)
-    test_data, test_label = df_to_data(df=df, eoos=eoos_test, prediction_hour=prediction_hour, observation_hour=observation_hour)
+    val_data, val_label = df_to_data(df=df, eoos=eoos_validation, observation_hour=observation_hour)
+    test_data, test_label = df_to_data(df=df, eoos=eoos_test, observation_hour=observation_hour)
 
     # load model
     movie_shape = (observation_hour*6-1,) + image_shape
@@ -326,7 +327,7 @@ def main():
     prediction_hour=24
     val_sample_size_half=50
     test_sample_size_half=50
-    ratio=[0.7, 0.15, 0.15]
+    ratio=[0.6, 0.2, 0.2]
     epochs=10
     batch_size=128
     nb_gpus=1
