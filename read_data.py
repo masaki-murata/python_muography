@@ -197,7 +197,7 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
         time_to_eruptions[i] = time_to_eruption.total_seconds() / t_u
         
     print("")
-    print(time_to_eruptions[-1])
+#    print(time_to_eruptions[-1])
     
     df_eruption = pd.DataFrame(time_to_eruptions,columns=["time to eruption"])
 
@@ -330,11 +330,12 @@ def deform_times(path_to_observation_hour_csv = "../data/obsevationhour%03d.csv"
 
 def main():  
     print("start main")
-#    remove_no_eruption_period(days_period=30, if_save=True)
 #    df = combine_muogram(if_save=True)
-    check_timedelta(path_to_image_csv = "../data/1-6.2014-2017.csv")
-    reform_muogram(path_to_image_csv = "../data/1-6.2014-2017.csv")
-#    make_observation_csv()
+#    check_timedelta(path_to_image_csv = "../data/1-6.2014-2017.csv")
+#    reform_muogram(path_to_image_csv = "../data/1-6.2014-2017.csv")
+#    make_observation_csv(path_to_reform_csv ="../data/1-6.2014-2017_reform.csv",
+#                         path_to_eruption_list_csv="../data/eruption_list_2014-2017.csv",)
+    remove_no_eruption_period(days_period=30, if_save=True)
 #    remove_time_deficit(observation_hour=6)         
 #    deform_times(observation_hour=6, prediction_hour=24)
 
