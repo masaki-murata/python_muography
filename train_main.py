@@ -193,29 +193,30 @@ def batch_iter_np(data, labels,
                   prediction_hour,
                   batch_size,
                   ):
+    batch_size_half = batch_size // 2
     data_short = data[np.where(labels<=prediction_hour)[0]]
-    labels_short = data[np.where(labels<=prediction_hour)[0]]
+    labels_short = labels[np.where(labels<=prediction_hour)[0]]
     data_long = data[np.where(labels>prediction_hour)[0]]
-    labels_long = data[np.where(labels>prediction_hour)[0]]
+    labels_long = labels[np.where(labels>prediction_hour)[0]]
 
     data_num_half = min(len(labels_short), len(labels_long))
-    steps_per_epoch = int( (data_num_half - 1) / batch_size ) + 1
+    steps_per_epoch = int( (data_num_half - 1) / batch_size_half ) + 1
 
     def data_generator():
         while True:
             for batch_num in range(steps_per_epoch):
                 if batch_num==0:
                     short_indices = np.random.randint( len( data_short ), size=data_num_half )
-                    data_short = data_short[short_indices]
-                    labels_short = labels_short[short_indices]
+                    data_short_shuffled = data_short[short_indices]
+                    labels_short_shuffled = labels_short[short_indices]
                     long_indices = np.random.randint( len( data_long ), size=data_num_half )
-                    data_long = data_long[long_indices]
-                    labels_long = labels_long[long_indices]
+                    data_long_shuffled = data_long[long_indices]
+                    labels_long_shuffled = labels_long[long_indices]
 
-                start_index = batch_num * batch_size
-                end_index = min((batch_num + 1) * batch_size, data_num_half)
-                batch_data = np.vstack(data_short[start_index:end_index], data_long[start_index:end_index])
-                batch_labels = np.vstack(labels_short[start_index:end_index], labels_long[start_index:end_index])
+                start_index = batch_num * batch_size_half
+                end_index = min((batch_num + 1) * batch_size_half, data_num_half)
+                batch_data = np.vstack((data_short_shuffled[start_index:end_index], data_long_shuffled[start_index:end_index]))
+                batch_labels = np.vstack((labels_short_shuffled[start_index:end_index], labels_long_shuffled[start_index:end_index]))
                 batch_indices = np.random.randint( len( batch_labels ), size=len(batch_labels) )
                 
                 yield batch_data[batch_indices], batch_labels[batch_indices]
@@ -347,6 +348,7 @@ def train(image_shape=(29,29,1),
         
     print("start train")
     # train
+    print(val_label.shape)
     model_multiple_gpu.fit_generator(generator=train_gen,
                                      steps_per_epoch=steps_per_epoch,
                                      epochs=epochs,
@@ -404,7 +406,7 @@ def main():
     ratio=[0.6, 0.2, 0.2]
     epochs=10
     batch_size=256
-    if_generator=False
+    if_generator_df=False
     nb_gpus=1
     
 #    eoos_train, eoos_validation, eoos_test = devide_data(days_period=30, observation_hour=6)
@@ -425,7 +427,7 @@ def main():
           test_sample_size_half=test_sample_size_half,
           epochs=epochs,
           batch_size=batch_size,
-          if_generator=if_generator,
+          if_generator_df=if_generator_df,
           nb_gpus=nb_gpus,
           )
     
