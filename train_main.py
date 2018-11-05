@@ -52,9 +52,11 @@ def make_model(input_shape,
     
     model = Model(input_img, output)
     opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-    model.compile(loss='mean_squared_error', optimizer=opt_generator)
+    model.compile(loss='mean_squared_error', optimizer=opt_generator, metrics=['mae'])
     
     model.summary()
+    
+    return model
 
 # データの重複がないように train, validation, test に分ける
 def devide_data(#end_of_observations=[],
@@ -157,13 +159,14 @@ def eoo_to_data(df,
 #    label = label.reshape((len(label),1))
     
     return image, label
-    
-def df_to_data(df,
-               eoos=[],
+
+# eoo_to_data の複数版
+def eoos_to_data(df,
+                 eoos=[],
 #               prediction_hour=24,
-               observation_hour=6,
-               image_shape=(29,29,1),
-               ):
+                 observation_hour=6,
+                 image_shape=(29,29,1),
+                 ):
     movie_shape = (observation_hour*6-1,) + image_shape
     input_shape = (len(eoos),) + movie_shape
     data = np.zeros(input_shape)
@@ -194,11 +197,13 @@ def batch_iter(df,
     
     data_num = len(eoos_train)
     steps_per_epoch = int( (data_num - 1) / batch_size ) + 1
+#    print("steps_per_epoch={0}".format(steps_per_epoch))
     def data_generator():
         while True:
             for batch_num in range(steps_per_epoch):
-#                if batch_num==0:
-#                    random.shuffle(eoos_train)
+                if batch_num==0:
+#                    print("shuffle")
+                    random.shuffle(eoos_train)
 #                    p = np.random.permutation(len(train_data))
 #                    data_shuffled = train_data[p]
 #                    label_shuffled = train_label[p]
@@ -207,13 +212,13 @@ def batch_iter(df,
                 end_index = min((batch_num + 1) * batch_size, data_num)
                 eoos_epoch = eoos_train[start_index:end_index]
 #                df_epoch = df_shuffle[start_index:end_index]
-                data, labels = df_to_data(df=df, 
-                                          eoos=eoos_epoch,
-                                          prediction_hour=prediction_hour, 
-                                          observation_hour=observation_hour,
-                                          image_shape=image_shape,
-                                          )
-                
+                data, labels = eoos_to_data(df=df, 
+                                            eoos=eoos_epoch,
+#                                            prediction_hour=prediction_hour, 
+                                            observation_hour=observation_hour,
+                                            image_shape=image_shape,
+                                            )
+#                print("data.shape={0}, labels.shape={1}".format(data.shape, labels.shape))
                 yield data, labels
     
     return steps_per_epoch, data_generator()
@@ -268,11 +273,10 @@ def train(image_shape=(29,29,1),
 #    df_test=make_validation_test(df=df_test, 
 #                                 sample_size_half=test_sample_size_half,
 #                                 observation_hour=observation_hour)
-    print("data, label")
     
 #    train_data, train_label = df_to_data(df=df_train, prediction_hour=prediction_hour)
-    val_data, val_label = df_to_data(df=df, eoos=eoos_validation, observation_hour=observation_hour)
-    test_data, test_label = df_to_data(df=df, eoos=eoos_test, observation_hour=observation_hour)
+    val_data, val_label = eoos_to_data(df=df, eoos=eoos_validation, observation_hour=observation_hour)
+    test_data, test_label = eoos_to_data(df=df, eoos=eoos_test, observation_hour=observation_hour)
 
     # load model
     movie_shape = (observation_hour*6-1,) + image_shape
@@ -282,7 +286,7 @@ def train(image_shape=(29,29,1),
     else:
         model_multiple_gpu = model
         
-    # train ようのデータジェネレータを作成
+    # train 用のデータジェネレータを作成
     steps_per_epoch, train_gen = batch_iter(df,
                                             eoos_train=eoos_train,
                                             prediction_hour=prediction_hour,
@@ -290,9 +294,10 @@ def train(image_shape=(29,29,1),
                                             image_shape=image_shape,
                                             batch_size=batch_size,
                                             )
-    
+    print("start train")
     # train
-    model_multiple_gpu.fit_generator(train_gen,
+    print(type(model_multiple_gpu))
+    model_multiple_gpu.fit_generator(generator=train_gen,
                                      steps_per_epoch=steps_per_epoch,
                                      epochs=epochs,
                                      validation_data=(val_data,val_label),
@@ -300,7 +305,9 @@ def train(image_shape=(29,29,1),
 
     return model
 
-def evaluate_test(df_test,
+def evaluate_test(df,
+                  eoos_test=[],
+                  observation_hour=6,
                   prediction_hour=24,
                   path_to_model="",
                   path_to_predicted="",
@@ -308,7 +315,7 @@ def evaluate_test(df_test,
                   batch_size=128,
                   ):
     # df からデータ取り出し
-    test_data, test_label = df_to_data(df=df_test, prediction_hour=prediction_hour)
+    test_data, test_label = eoos_to_data(df=df, eoos=eoos_test, observation_hour=observation_hour)
 
     if model=="empty":
         model = keras.model.load_model(path_to_model)
@@ -318,7 +325,8 @@ def evaluate_test(df_test,
     # dataframe として推定値と実際の値をリスト化
     df_predicted = pd.DataFrame(predicted, columns=["predicted time to eruption"])
 
-    df_truth = df_test.loc[:, ["end of observation", "time to eruption"]]
+    df = df[df["end of observation"].isin(eoos_test)]
+    df_truth = df.loc[:, ["end of observation", "time to eruption"]]
     df_truth = df_truth.rename(columns={"time to eruption":"actual time to eruption"})
     
     df_predicted = pd.concat([df_truth,df_predicted], axis=1)    
