@@ -197,11 +197,11 @@ def batch_iter(df,
     def data_generator():
         while True:
             for batch_num in range(steps_per_epoch):
-                if batch_num==0:
+#                if batch_num==0:
+#                    random.shuffle(eoos_train)
 #                    p = np.random.permutation(len(train_data))
 #                    data_shuffled = train_data[p]
 #                    label_shuffled = train_label[p]
-                    random.shuffle(eoos_train)
 #                    df_shuffle = df.sample(frac=1)
                 start_index = batch_num * batch_size
                 end_index = min((batch_num + 1) * batch_size, data_num)
@@ -248,13 +248,13 @@ def train(image_shape=(29,29,1),
 
     # sampling for validation and test
     eoos_validation=make_validation_test(df,
-                                        eoos=eoos_validation,
-                                        sample_size_half=val_sample_size_half,
-                                        observation_hour=observation_hour)
+                                         eoos=eoos_validation,
+                                         sample_size_half=val_sample_size_half,
+                                         observation_hour=observation_hour)
     eoos_test=make_validation_test(df, 
-                                  eoos=eoos_test,
-                                  sample_size_half=test_sample_size_half,
-                                  observation_hour=observation_hour)
+                                   eoos=eoos_test,
+                                   sample_size_half=test_sample_size_half,
+                                   observation_hour=observation_hour)
 
     
 #    df_train, df_validation, df_test = devide_data(days_period=days_period,
@@ -283,13 +283,13 @@ def train(image_shape=(29,29,1),
         model_multiple_gpu = model
         
     # train ようのデータジェネレータを作成
-    steps_per_epoch, train_gen= batch_iter(df,
-                                           eoos_train=eoos_train,
-                                           prediction_hour=prediction_hour,
-                                           observation_hour=observation_hour,
-                                           image_shape=image_shape,
-                                           batch_size=batch_size,
-                                           )
+    steps_per_epoch, train_gen = batch_iter(df,
+                                            eoos_train=eoos_train,
+                                            prediction_hour=prediction_hour,
+                                            observation_hour=observation_hour,
+                                            image_shape=image_shape,
+                                            batch_size=batch_size,
+                                            )
     
     # train
     model_multiple_gpu.fit_generator(train_gen,
@@ -297,6 +297,7 @@ def train(image_shape=(29,29,1),
                                      epochs=epochs,
                                      validation_data=(val_data,val_label),
                                      )
+
     return model
 
 def evaluate_test(df_test,
