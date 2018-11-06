@@ -290,6 +290,9 @@ def analyze_image(df="empty",
     img_short = Image.fromarray(short).resize((512,512))
     img_long = Image.fromarray(long).resize((512,512))
     
+    img_short.show()
+    img_long.show()
+    
     path_to_short = "../data/hours_short%03d.jpg" % hours_short
     path_to_long = "../data/hours_long%03d.jpg" % hours_long
     img_short.convert('RGB').save(path_to_short)
