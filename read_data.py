@@ -272,8 +272,8 @@ def remove_time_deficit(df="empty",
 
 def analyze_image(df="empty",
                   path_to_observation_csv = "../data/observation.csv",
-                  hours_short=1,
-                  hours_long=24,
+                  hours_short=24,
+                  hours_long=24*7,
                   ):
     if df is "empty":
         df = pd.read_csv(path_to_observation_csv)
@@ -285,7 +285,7 @@ def analyze_image(df="empty",
     short = np.array(df_short.mean()["pixel001":"pixel841"]).reshape(29,29)
     short = short*255.0 / total.max()
     long = np.array(df_long.mean()["pixel001":"pixel841"]).reshape(29,29)
-    long = short*255.0 / total.max()
+    long = long*255.0 / total.max()
     
     img_short = Image.fromarray(short).resize((512,512))
     img_long = Image.fromarray(long).resize((512,512))
@@ -305,7 +305,7 @@ def main():
 #    make_observation_csv(path_to_reform_csv ="../data/1-6.2014-2017_reform.csv",
 #                         path_to_eruption_list_csv="../data/eruption_list_2014-2017.csv",)
 #    remove_no_eruption_period(days_period=30, if_save=True)
-    short, long = analyze_image()
+    short, long = analyze_image(hours_short=24, hours_long=24)
     
 if __name__ == '__main__':
     main()

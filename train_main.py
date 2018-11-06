@@ -33,14 +33,22 @@ if os.name=='posix':
 # 噴火までの時間を圧縮する関数
 def deform_time(time, # 噴火までの時間を時間単位で
                 prediction_hour, # 噴火を予期したい時間を時間単位で
+                if_predict_hour,
                 ):
-    if time > prediction_hour:
-        arg_tanh = (time-prediction_hour) / prediction_hour
-        time = prediction_hour + prediction_hour*math.tanh(arg_tanh)
+    if if_predict_hour:
+        if time > prediction_hour:
+            arg_tanh = (time-prediction_hour) / prediction_hour
+            time = prediction_hour + prediction_hour*math.tanh(arg_tanh)
+    else:
+        if time > prediction_hour:
+            time = 0
+        else:
+            time = 1
     return time
 
 # CNN モデルを作る関数
 def make_model(input_shape,
+               if_predict_hour,
                ):
     input_img = Input(shape=input_shape)
     x = Conv3D(filters=8, kernel_size=(3,3,3), padding="valid", activation="relu")(input_img)
@@ -58,11 +66,18 @@ def make_model(input_shape,
     
     x = Flatten()(x)
     x = Dense(64, activation="relu")(x)
-    output = Dense(1, activation="relu")(x)
+    if if_predict_hour:
+        output = Dense(1, activation="relu")(x)
+    else:
+        output = Dense(1, activation="sigmoid")(x)
     
     model = Model(input_img, output)
     opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-    model.compile(loss='mean_squared_error', optimizer=opt_generator, metrics=['mae'])
+    if if_predict_hour:
+        model.compile(loss='mean_squared_error', optimizer=opt_generator, metrics=['mae'])
+    else:
+        model.compile(loss='binary_crossentropy', optimizer=opt_generator, metrics=['acc'])
+        
     
     model.summary()
     
@@ -206,7 +221,10 @@ def eoos_to_data(df,
 def batch_iter_np(data, labels,
                   prediction_hour,
                   batch_size,
+                  if_predict_hour,
                   ):
+    if not if_predict_hour:
+        prediction_hour = 0.5
     batch_size_half = batch_size // 2
     data_short = data[np.where(labels<=prediction_hour)[0]]
     labels_short = labels[np.where(labels<=prediction_hour)[0]]
@@ -244,8 +262,7 @@ def batch_iter(df,
                prediction_hour=24,
                observation_hour=6,
                image_shape=(29,29,1),
-#               train_data,
-#               train_label,
+               if_predict_hour=True,
                batch_size=128,
                ):
     
@@ -287,6 +304,7 @@ def train(image_shape=(29,29,1),
           epochs=10,
           batch_size=128,
           if_generator_df=True,
+          if_predict_hour=True,
           nb_gpus=1,
           ):
     
@@ -302,14 +320,6 @@ def train(image_shape=(29,29,1),
                                                          ratio=ratio,
                                                          )
 
-    # 長時間部分を圧縮
-    print("prediction_hour = ", prediction_hour)
-    df["time to eruption"] = df["time to eruption"].map(lambda time: deform_time(time,prediction_hour))
-    print(max(df["time to eruption"].values))
-#    eoos_train = [deform_time(eoo, prediction_hour) for eoo in eoos_train]
-#    eoos_validation = [deform_time(eoo,prediction_hour) for eoo in eoos_validation]
-#    eoos_test = [deform_time(eoo,prediction_hour) for eoo in eoos_test]
-#    print(max(eoos_validation))
     # sampling for validation and test
     eoos_validation=make_validation_test(df,
                                          eoos=eoos_validation,
@@ -322,6 +332,11 @@ def train(image_shape=(29,29,1),
                                    observation_hour=observation_hour,
                                    prediction_hour=prediction_hour)
 
+
+    # 長時間部分を圧縮
+    print("prediction_hour = ", prediction_hour)
+    df["time to eruption"] = df["time to eruption"].map(lambda time: deform_time(time, prediction_hour, if_predict_hour))
+    print(max(df["time to eruption"].values))
     
 #    df_train, df_validation, df_test = devide_data(days_period=days_period,
 #                                                   observation_hour=observation_hour,
@@ -341,7 +356,7 @@ def train(image_shape=(29,29,1),
 
     # load model
     movie_shape = (observation_hour*6-1,) + image_shape
-    model = make_model(input_shape=movie_shape)
+    model = make_model(input_shape=movie_shape, if_predict_hour=if_predict_hour)
     if int(nb_gpus) > 1:
         model_multiple_gpu = multi_gpu_model(model, gpus=nb_gpus)
     else:
@@ -355,6 +370,7 @@ def train(image_shape=(29,29,1),
                                                 observation_hour=observation_hour,
                                                 image_shape=image_shape,
                                                 batch_size=batch_size,
+                                                if_predict_hour=if_predict_hour,
                                                 )
     else:
         train_data, train_label = eoos_to_data(df,
@@ -365,6 +381,7 @@ def train(image_shape=(29,29,1),
         steps_per_epoch, train_gen = batch_iter_np(train_data, train_label,
                                                    prediction_hour=prediction_hour,
                                                    batch_size=batch_size,
+                                                   if_predict_hour=if_predict_hour,
                                                    )
         print(np.average(train_label), np.average(val_label))
 
@@ -430,6 +447,7 @@ def main():
     epochs=100
     batch_size=256
     if_generator_df=False
+    if_predict_hour=False
     nb_gpus=1
     
 #    eoos_train, eoos_validation, eoos_test = devide_data(days_period=30, observation_hour=6)
@@ -451,6 +469,7 @@ def main():
           epochs=epochs,
           batch_size=batch_size,
           if_generator_df=if_generator_df,
+          if_predict_hour=if_predict_hour,
           nb_gpus=nb_gpus,
           )
     
