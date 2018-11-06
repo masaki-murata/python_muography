@@ -313,7 +313,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-short, long = analyze_image(hours_short=1, hours_long=24*7)
+short, long = analyze_image(hours_short=1, hours_long=24*20)
 
 #path_to_csv = "../data/1-6.2017.csv"
 #images = csv_to_numpy(path_to_csv=path_to_csv,
