@@ -418,7 +418,7 @@ def evaluate_test(df,
 def main():
     image_shape=(29,29,1)
     days_period=10
-    observation_hour=6
+    observation_hour=12
     prediction_hour=6
     val_sample_size_half=50
     test_sample_size_half=50
