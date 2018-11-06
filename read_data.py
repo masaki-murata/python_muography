@@ -260,10 +260,10 @@ def remove_time_deficit(df="empty",
         if time_delta == datetime.timedelta(minutes=10*time_step): 
             # 時間差が行の間隔に等しい、つまり欠損データが無ければそれを加える
             eoo_time_step.append(eoo_after)
-            print("\r%d" % t, end="")
+#            print("\r%d" % t, end="")
     eoo_time_step = list(map(datetime_to_str, eoo_time_step))
 #    print(e_o_b_time_step[:3])
-    print("")
+#    print("")
     
     return eoo_time_step
     

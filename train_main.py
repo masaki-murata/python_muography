@@ -31,8 +31,8 @@ if os.name=='posix':
     set_session(tf.Session(config=config))
 
 # 噴火までの時間を圧縮する関数
-def deform_time(time=1, # 噴火までの時間を時間単位で
-                prediction_hour=24, # 噴火を予期したい時間を時間単位で
+def deform_time(time, # 噴火までの時間を時間単位で
+                prediction_hour, # 噴火を予期したい時間を時間単位で
                 ):
     if time > prediction_hour:
         arg_tanh = (time-prediction_hour) / prediction_hour
@@ -295,7 +295,9 @@ def train(image_shape=(29,29,1),
                                                          )
 
     # 長時間部分を圧縮
+    print("prediction_hour = ", prediction_hour)
     df["time to eruption"] = df["time to eruption"].map(lambda time: deform_time(time,prediction_hour))
+    print(max(df["time to eruption"].values))
 #    eoos_train = [deform_time(eoo, prediction_hour) for eoo in eoos_train]
 #    eoos_validation = [deform_time(eoo,prediction_hour) for eoo in eoos_validation]
 #    eoos_test = [deform_time(eoo,prediction_hour) for eoo in eoos_test]
@@ -304,11 +306,13 @@ def train(image_shape=(29,29,1),
     eoos_validation=make_validation_test(df,
                                          eoos=eoos_validation,
                                          sample_size_half=val_sample_size_half,
-                                         observation_hour=observation_hour)
+                                         observation_hour=observation_hour,
+                                         prediction_hour=prediction_hour)
     eoos_test=make_validation_test(df, 
                                    eoos=eoos_test,
                                    sample_size_half=test_sample_size_half,
-                                   observation_hour=observation_hour)
+                                   observation_hour=observation_hour,
+                                   prediction_hour=prediction_hour)
 
     
 #    df_train, df_validation, df_test = devide_data(days_period=days_period,
@@ -411,7 +415,7 @@ def main():
     image_shape=(29,29,1)
     days_period=30
     observation_hour=6
-    prediction_hour=24
+    prediction_hour=6
     val_sample_size_half=50
     test_sample_size_half=50
     ratio=[0.6, 0.2, 0.2]
