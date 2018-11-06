@@ -281,6 +281,8 @@ def analyze_image(df="empty",
     df_short = df[df["time to eruption"] <= hours_short]
     df_long = df[df["time to eruption"] > hours_long]
     
+    print(len(df_short), len(df_long))
+    
     total = np.array(df.mean()["pixel001":"pixel841"]).reshape(29,29)
     short = np.array(df_short.mean()["pixel001":"pixel841"]).reshape(29,29)
     long = np.array(df_long.mean()["pixel001":"pixel841"]).reshape(29,29)
@@ -313,7 +315,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-short, long = analyze_image(hours_short=0, hours_long=24*30)
+short, long = analyze_image(hours_short=0.5, hours_long=24*30)
 
 #path_to_csv = "../data/1-6.2017.csv"
 #images = csv_to_numpy(path_to_csv=path_to_csv,
