@@ -49,14 +49,15 @@ def make_model(input_shape,
     x = Conv3D(filters=32, kernel_size=(3,3,3), padding="valid", activation="relu")(x)
     x = Conv3D(filters=32, kernel_size=(3,3,3), strides=(2,2,2), padding="valid", activation="relu")(x)
     x = BatchNormalization()(x)
-#    x = Conv3D(filters=2, kernel_size=(3,3,3), padding="valid", activation="relu")(x)
-#    x = Conv3D(filters=2, kernel_size=(3,3,3), strides=(2,2,2), padding="valid", activation="relu")(x)
-#    output_conv = BatchNormalization()(x)
+    x = Conv3D(filters=128, kernel_size=(3,3,3), padding="valid", activation="relu")(x)
+    x = Conv3D(filters=128, kernel_size=(3,3,3), padding="valid", activation="relu")(x)
+#    x = Conv3D(filters=128, kernel_size=(3,3,3), strides=(2,2,2), padding="valid", activation="relu")(x)
+#    x = BatchNormalization()(x)
     
 #    output_conv = Conv3D(filters=2, kernel_size=(2,2,2), padding="valid", activation="relu")(x)
     
     x = Flatten()(x)
-    x = Dense(256, activation="relu")(x)
+    x = Dense(64, activation="relu")(x)
     output = Dense(1, activation="relu")(x)
     
     model = Model(input_img, output)
@@ -289,7 +290,7 @@ def train(image_shape=(29,29,1),
     if os.path.exists(path_to_observation):
         df = pd.read_csv(path_to_observation)
     else:
-        df = remove_no_eruption_period(days_period=days_period)
+        df = read_data.remove_no_eruption_period(days_period=days_period)
     
     # load data
     eoos_train, eoos_validation, eoos_test = devide_data(days_period=days_period,
@@ -304,7 +305,7 @@ def train(image_shape=(29,29,1),
 #    eoos_train = [deform_time(eoo, prediction_hour) for eoo in eoos_train]
 #    eoos_validation = [deform_time(eoo,prediction_hour) for eoo in eoos_validation]
 #    eoos_test = [deform_time(eoo,prediction_hour) for eoo in eoos_test]
-    print(max(eoos_validation))
+#    print(max(eoos_validation))
     # sampling for validation and test
     eoos_validation=make_validation_test(df,
                                          eoos=eoos_validation,
