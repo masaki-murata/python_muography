@@ -68,6 +68,10 @@ def make_model(input_shape,
     
     return model
 
+def make_model_2D(input_shape,
+                  ):
+    print("aho")
+    
 # データの重複がないように train, validation, test に分ける
 def devide_data(#end_of_observations=[],
                 #path_to_observation_hour_csv = "../data/observationhour%03d.csv",
@@ -128,7 +132,7 @@ def make_validation_test(df,
         eoos_sample.append(eoo)
         eoos_short = [x_short for x_short in eoos_short if abs(x_short-eoo)>=time_delta]
         eoos_long = [x_long for x_long in eoos_long if abs(x_long-eoo)>=time_delta]
-#        print(len(eoo_short))
+#        print(len(eoos_short))
         
         count += 1
         assert len(eoos_short)+len(eoos_long) > len(df) - (time_step_observation*2+1)*count - 1, \
@@ -419,9 +423,9 @@ def main():
     image_shape=(29,29,1)
     days_period=10
     observation_hour=12
-    prediction_hour=6
-    val_sample_size_half=50
-    test_sample_size_half=50
+    prediction_hour=12
+    val_sample_size_half=40
+    test_sample_size_half=40
     ratio=[0.6, 0.2, 0.2]
     epochs=100
     batch_size=256

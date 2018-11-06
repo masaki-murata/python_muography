@@ -8,6 +8,7 @@ Created on Fri Oct 26 10:28:35 2018
 import csv, re, datetime, math
 import pandas as pd
 import numpy as np
+from PIL import Image
 # read muoncounter
 
 def get_component(component):
@@ -267,66 +268,34 @@ def remove_time_deficit(df="empty",
     
     return eoo_time_step
     
-    # df_observationから e_o_b_time_step に含まれるものだけ抽出
-#    df_restricted = df_observation[df_observation["end of observation"].isin(eoo_time_step)]
-#    print(len(df_restricted))
-#    print(df_restricted[:3])
-#    if if_save:
-#        df_restricted.to_csv(path_to_observation_hour_csv % observation_hour)
-#    
-#    return df_restricted
-
-# 削除する関数を一つにまとめたもの
-#def remove_all(df="empty",
-#               path_to_observation_csv = "../data/observation.csv",
-#               days_period=10,
-#               observation_hour=24, # period_observation 時間の観測データを使う
-#               if_save=False,
-#               ):
-#    if df is "empty":
-#        df = pd.read_csv(path_to_observation_csv)
-#    df = remove_no_eruption_period(df, days_period)
-#    df = remove_time_deficit(df, observation_hour)
-#    
-#    if if_save:
-#        path_to_csv =  "../data/observation_dp%03d_obh%03d.csv" % (days_period, observation_hour)
-#        df.to_csv(path_to_csv)
 
 
-"""
-# time to eruption を再定義
-# ここは学習時でもいいかも
-def deform_times(path_to_observation_hour_csv = "../data/obsevationhour%03d.csv",
-                 path_to_observation_hour_prediction_hour_csv =  "../data/observationhour%03d_predictionhour%03d.csv",
-                 observation_hour=24,
-                 prediction_hour=24, #単位は hour
-                 ):
-#    path_to_observation_ts_th = path_to_observation_time_step_csv[:-4] +\
-#    "timethreshold%03d.csv" % prediction_hour
-    # 一定時間後を圧縮
-    def deform_time(time):
-        if time > prediction_hour:
-            arg_tanh = (time-prediction_hour) / prediction_hour
-            time = prediction_hour + prediction_hour*math.tanh(arg_tanh)
-        return time
-    df_observation_t_s = pd.read_csv(path_to_observation_hour_csv % observation_hour)
-    time_to_eruptions = df_observation_t_s["time to eruption"].values
-    deformed_times = list(map(deform_time, time_to_eruptions))
-    print(len(deformed_times))
-    print(deformed_times[:3])
-    print(max(deformed_times))
+def analyze_image(df="empty",
+                  path_to_observation_csv = "../data/observation.csv",
+                  hours_short=1,
+                  hours_long=24,
+                  ):
+    if df is "empty":
+        df = pd.read_csv(path_to_observation_csv)
+     
+    df_short = df[df["time to eruption"] <= hours_short]
+    df_long = df[df["time to eruption"] > hours_long]
     
-    # time to eruption を置き換える
-    df_observation_t_s = df_observation_t_s.iloc[:,:-1]
-    df_eruption = pd.DataFrame(deformed_times,columns=["time to eruption"])
-    df_deformed_time = pd.concat([df_observation_t_s,df_eruption], axis=1)
-    df_deformed_time.to_csv(path_to_observation_hour_prediction_hour_csv % (observation_hour, prediction_hour), index=None)
-"""    
-#            series = pd.Series(df_observation.iloc[t].values, index=df_observation.columns)
-#            df.append(series, ignore_index = True)
-#        start_of_observation = datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
-#    df.to_csv(path_to_observation_time_step_csv % time_step, index=None)
-
+    total = np.array(df.mean()["pixel001":"pixel841"]).reshape(29,29)
+    short = np.array(df_short.mean()["pixel001":"pixel841"]).reshape(29,29)
+    short = short*255.0 / total.max()
+    long = np.array(df_long.mean()["pixel001":"pixel841"]).reshape(29,29)
+    long = short*255.0 / total.max()
+    
+    img_short = Image.fromarray(short).resize((512,512))
+    img_long = Image.fromarray(long).resize((512,512))
+    
+    path_to_short = "../data/hours_short%03d.jpg" % hours_short
+    path_to_long = "../data/hours_long%03d.jpg" % hours_long
+    img_short.convert('RGB').save(path_to_short)
+    img_long.convert('RGB').save(path_to_long)
+    
+    return short, long
 
 def main():  
     print("start main")
@@ -335,10 +304,9 @@ def main():
 #    reform_muogram(path_to_image_csv = "../data/1-6.2014-2017.csv")
 #    make_observation_csv(path_to_reform_csv ="../data/1-6.2014-2017_reform.csv",
 #                         path_to_eruption_list_csv="../data/eruption_list_2014-2017.csv",)
-    remove_no_eruption_period(days_period=30, if_save=True)
-#    remove_time_deficit(observation_hour=6)         
-#    deform_times(observation_hour=6, prediction_hour=24)
-
+#    remove_no_eruption_period(days_period=30, if_save=True)
+    short, long = analyze_image()
+    
 if __name__ == '__main__':
     main()
 
