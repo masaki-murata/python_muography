@@ -299,7 +299,7 @@ def train(image_shape=(29,29,1),
 #    eoos_train = [deform_time(eoo, prediction_hour) for eoo in eoos_train]
 #    eoos_validation = [deform_time(eoo,prediction_hour) for eoo in eoos_validation]
 #    eoos_test = [deform_time(eoo,prediction_hour) for eoo in eoos_test]
-
+    print(max(eoos_validation))
     # sampling for validation and test
     eoos_validation=make_validation_test(df,
                                          eoos=eoos_validation,
@@ -411,7 +411,7 @@ def main():
     image_shape=(29,29,1)
     days_period=30
     observation_hour=6
-    prediction_hour=6
+    prediction_hour=24
     val_sample_size_half=50
     test_sample_size_half=50
     ratio=[0.6, 0.2, 0.2]
