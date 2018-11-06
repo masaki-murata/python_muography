@@ -286,7 +286,10 @@ def train(image_shape=(29,29,1),
           ):
     
     path_to_observation = "../data/observation_daysperiod%03d.csv" % (days_period)
-    df = pd.read_csv(path_to_observation)
+    if os.path.exists(path_to_observation):
+        df = pd.read_csv(path_to_observation)
+    else:
+        df = remove_no_eruption_period(days_period=days_period)
     
     # load data
     eoos_train, eoos_validation, eoos_test = devide_data(days_period=days_period,
@@ -413,7 +416,7 @@ def evaluate_test(df,
     
 def main():
     image_shape=(29,29,1)
-    days_period=30
+    days_period=10
     observation_hour=6
     prediction_hour=6
     val_sample_size_half=50

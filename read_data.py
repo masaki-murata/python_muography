@@ -191,12 +191,12 @@ def make_observation_csv(# path_to_image_csv = "../data/1-6.2014.csv",
 #            print("\r%d, %d" % (count_eruption, len(time_of_eruptions)) )
             assert count_eruption < len(time_of_eruptions)+1
             time_of_eruption = time_of_eruptions[count_eruption]
-        print("\r{0},{1}".format(end_of_observation, time_of_eruption), end="")
+#        print("\r{0},{1}".format(end_of_observation, time_of_eruption), end="")
         end_of_observations[i] 
         time_to_eruption = time_of_eruption - end_of_observation
         time_to_eruptions[i] = time_to_eruption.total_seconds() / t_u
         
-    print("")
+#    print("")
 #    print(time_to_eruptions[-1])
     
     df_eruption = pd.DataFrame(time_to_eruptions,columns=["time to eruption"])
