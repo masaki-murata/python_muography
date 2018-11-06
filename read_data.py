@@ -305,7 +305,7 @@ def main():
 #    make_observation_csv(path_to_reform_csv ="../data/1-6.2014-2017_reform.csv",
 #                         path_to_eruption_list_csv="../data/eruption_list_2014-2017.csv",)
 #    remove_no_eruption_period(days_period=30, if_save=True)
-    short, long = analyze_image(hours_short=24, hours_long=24)
+    short, long = analyze_image(hours_short=24, hours_long=24*7)
     
 if __name__ == '__main__':
     main()
