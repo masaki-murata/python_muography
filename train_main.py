@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import random, datetime, math, os
 import keras
-from keras.layers import Input, Dense, Conv3D, Flatten
+from keras.layers import Input, Dense, Conv3D, Flatten, BatchNormalization
 from keras.models import Model
 from keras.optimizers import Adam
 if os.name=='posix':
@@ -43,10 +43,19 @@ def deform_time(time=1, # 噴火までの時間を時間単位で
 def make_model(input_shape,
                ):
     input_img = Input(shape=input_shape)
-    x = Conv3D(filters=2, kernel_size=(2,2,2), padding="valid", activation="relu")(input_img)
-    output_conv = Conv3D(filters=2, kernel_size=(2,2,2), padding="valid", activation="relu")(x)
+    x = Conv3D(filters=8, kernel_size=(3,3,3), padding="valid", activation="relu")(input_img)
+    x = Conv3D(filters=8, kernel_size=(3,3,3), strides=(2,2,2), padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+    x = Conv3D(filters=32, kernel_size=(3,3,3), padding="valid", activation="relu")(x)
+    x = Conv3D(filters=32, kernel_size=(3,3,3), strides=(2,2,2), padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+#    x = Conv3D(filters=2, kernel_size=(3,3,3), padding="valid", activation="relu")(x)
+#    x = Conv3D(filters=2, kernel_size=(3,3,3), strides=(2,2,2), padding="valid", activation="relu")(x)
+#    output_conv = BatchNormalization()(x)
     
-    x = Flatten()(output_conv)
+#    output_conv = Conv3D(filters=2, kernel_size=(2,2,2), padding="valid", activation="relu")(x)
+    
+    x = Flatten()(x)
     x = Dense(256, activation="relu")(x)
     output = Dense(1, activation="relu")(x)
     
