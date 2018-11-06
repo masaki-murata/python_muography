@@ -354,6 +354,8 @@ def train(image_shape=(29,29,1),
                                                    prediction_hour=prediction_hour,
                                                    batch_size=batch_size,
                                                    )
+        print(np.average(train_label), np.average(val_label))
+
         
     print("start train")
     # train
@@ -407,13 +409,13 @@ def evaluate_test(df,
     
 def main():
     image_shape=(29,29,1)
-    observation_hour=6
     days_period=30
-    prediction_hour=24
+    observation_hour=6
+    prediction_hour=6
     val_sample_size_half=50
     test_sample_size_half=50
     ratio=[0.6, 0.2, 0.2]
-    epochs=10
+    epochs=100
     batch_size=256
     if_generator_df=False
     nb_gpus=1
