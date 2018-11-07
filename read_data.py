@@ -5,7 +5,7 @@ Created on Fri Oct 26 10:28:35 2018
 @author: murata
 """
 
-import csv, re, datetime, math
+import csv, re, datetime, math, scipy
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -302,6 +302,21 @@ def analyze_image(df="empty",
     img_long.convert('RGB').save(path_to_long)
     
     return short, long
+
+    
+def time_series(df="empty",
+                path_to_observation_csv = "../data/observation.csv",
+                average_hour=6,
+                ):
+    if df is "empty":
+        df = pd.read_csv(path_to_observation_csv)
+    movie = np.array(df.loc[:,"pixel001":"pixel841"].values)
+    moving_average = scipy.ndimage.convolve(movie, np.ones((6*average_hour,1)), mode="constant")
+    tte = np.array(df["time to eruption"].values)
+    eruption_time = np.zeros(tte.shape)
+    eruption_time[tte <= average_hour] = 1
+
+        
 
 def main():  
     print("start main")
