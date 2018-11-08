@@ -316,6 +316,8 @@ def time_series(df="empty",
     eruption_time = np.zeros(tte.shape)
     eruption_time[tte <= average_hour] = 1
 
+    return moving_average, eruption_time
+
         
 
 def main():  
@@ -330,8 +332,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-short, long = analyze_image(hours_short=0.5, hours_long=24*30)
-
+moving_average, eruption_time = time_series(average_hour=24)
 #path_to_csv = "../data/1-6.2017.csv"
 #images = csv_to_numpy(path_to_csv=path_to_csv,
 #                      if_save=True)
